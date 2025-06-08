@@ -1,60 +1,70 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-const bonusCards = [
-  "+5 Minuten Bonuszeit",
-  "+10 Minuten Bonuszeit",
-  "+15 Minuten Bonuszeit",
-  "+20 Minuten Bonuszeit",
-  "+30 Minuten Bonuszeit",
+// Definiere alle Karten mit jeweiliger Anzahl (Häufigkeit)
+const cardsWithCount = [
+  // Bonus
+  { text: "+5 Minuten Bonuszeit", count: 5 },
+  { text: "+10 Minuten Bonuszeit", count: 4 },
+  { text: "+15 Minuten Bonuszeit", count: 3 },
+  { text: "+20 Minuten Bonuszeit", count: 2 },
+  { text: "+30 Minuten Bonuszeit", count: 1 },
+
+  // Flüche
+  { text: "Dorfgrenzen-Fluch: Du darfst deinen aktuellen Ortsteil 10 Minuten lang nicht verlassen.", count: 5 },
+  { text: "Picknick-Fluch: Du musst dich zu einer Liegewiese oder Sitzbank begeben und 5 Minuten dort bleiben.", count: 5 },
+  { text: "Ortsschild-Fluch: Deine nächste Bewegung muss zu einem Ortsschild führen.", count: 5 },
+  { text: "Kirchturmuhr-Fluch: Du darfst dich erst weiterbewegen, wenn eine volle Viertelstunde beginnt.", count: 5 },
+  { text: "Bäcker-Fluch: Du musst ein Foto von einer lokalen Bäckerei machen, bevor du weitermachen darfst.", count: 5 },
+  { text: "Selfie-Fluch: Mache ein Selfie mit einem Denkmal oder Ortsschild.", count: 3 },
+  { text: "Feldrand-Fluch: Du musst dich in der Nähe eines Feldrandes aufhalten (max. 100 m).", count: 2 },
+
+  // Power-Ups
+  { text: "Zufallsfrage: Du darfst eine beliebige Frage stellen, ohne Kostenregel.", count: 5 },
+  { text: "Veto: Du darfst eine Frage einmal ablehnen.", count: 4 },
+  { text: "Kopiereffekt: Du darfst den letzten Effekt (Bonus oder Power) erneut nutzen.", count: 3 },
+  { text: "Versteck-Wechsel-Karte: Alles wird 30 Minuten eingefroren. Du darfst dein Versteck wechseln. (Nur 1x im Spiel)", count: 3 },
 ];
 
-const curseCards = [
-  "Dorfgrenzen-Fluch: Du darfst deinen aktuellen Ortsteil 10 Minuten lang nicht verlassen.",
-  "Picknick-Fluch: Du musst dich zu einer Liegewiese oder Sitzbank begeben und 5 Minuten dort bleiben.",
-  "Ortsschild-Fluch: Deine nächste Bewegung muss zu einem Ortsschild führen.",
-  "Kirchturmuhr-Fluch: Du darfst dich erst weiterbewegen, wenn eine volle Viertelstunde beginnt.",
-  "Bäcker-Fluch: Du musst ein Foto von einer lokalen Bäckerei machen, bevor du weitermachen darfst.",
-  "Selfie-Fluch: Mache ein Selfie mit einem Denkmal oder Ortsschild.",
-  "Feldrand-Fluch: Du musst dich in der Nähe eines Feldrandes aufhalten (max. 100 m).",
-];
-
-const powerUpCards = [
-  "Zufallsfrage: Du darfst eine beliebige Frage stellen, ohne Kostenregel.",
-  "Veto: Du darfst eine Frage einmal ablehnen.",
-  "Kopiereffekt: Du darfst den letzten Effekt (Bonus oder Power) erneut nutzen.",
-  "Versteck-Wechsel-Karte: Alles wird 30 Minuten eingefroren. Du darfst dein Versteck wechseln. (Nur 1x im Spiel)",
-];
-
-// Hilfsfunktion, um zufällig eine Karte zu ziehen
-function drawRandom(cards) {
-  const index = Math.floor(Math.random() * cards.length);
-  return cards[index];
+// Hilfsfunktion: Erzeuge ein Array mit den Karten unter Berücksichtigung der Häufigkeit
+function createDeck(cardsWithCount) {
+  const deck = [];
+  cardsWithCount.forEach(({ text, count }) => {
+    for (let i = 0; i < count; i++) {
+      deck.push(text);
+    }
+  });
+  return deck;
 }
 
 export default function HideAndSeekApp() {
-  const [team, setTeam] = useState(null); // "hider" oder "seeker"
-  const [category, setCategory] = useState(null); // bonus, curse, power
-  const [hiderInventory, setHiderInventory] = useState([]); // Gesammelte Karten für Hider
+  const [team, setTeam] = useState(null); // hider oder seeker
+  const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
+  const [hiderInventory, setHiderInventory] = useState([]);
   const [currentCard, setCurrentCard] = useState(null);
 
-  const categories = {
-    bonus: bonusCards,
-    curse: curseCards,
-    power: powerUpCards,
-  };
+  // Karte ziehen: Zufällig aus dem verbliebenen Deck ziehen
+  const drawCard = () => {
+    if (deck.length === 0) {
+      setCurrentCard("Keine Karten mehr im Stapel!");
+      return;
+    }
 
-  const handleDrawCard = () => {
-    if (!category) return;
-    const card = drawRandom(categories[category]);
+    const randomIndex = Math.floor(Math.random() * deck.length);
+    const card = deck[randomIndex];
+
+    // Karte aus Deck entfernen
+    const newDeck = [...deck];
+    newDeck.splice(randomIndex, 1);
+    setDeck(newDeck);
+
     setCurrentCard(card);
-    // Wenn Team Hider, Karte ins Inventar legen
     if (team === "hider") {
       setHiderInventory((prev) => [...prev, card]);
     }
   };
 
   if (!team) {
-    // Auswahl Team
+    // Team wählen
     return (
       <div className="max-w-md mx-auto p-4 text-center">
         <h1 className="text-xl font-bold mb-4">Wähle dein Team</h1>
@@ -86,58 +96,40 @@ export default function HideAndSeekApp() {
   // Team Hider UI
   return (
     <div className="max-w-md mx-auto p-4 text-center">
-      <h1 className="text-xl font-bold mb-4">Hide & Seek – Hider Karten ziehen</h1>
+      <h1 className="text-xl font-bold mb-4">Hide & Seek – Karten ziehen</h1>
 
-      <div className="mb-4">
-        <h2 className="font-semibold mb-2">Kategorie wählen (wird zufällig gesetzt):</h2>
-        <button
-          className="btn m-1 p-2 border rounded bg-gray-300"
-          onClick={() => {
-            // Kategorie zufällig wählen
-            const keys = Object.keys(categories);
-            const randomCat = keys[Math.floor(Math.random() * keys.length)];
-            setCategory(randomCat);
-            setCurrentCard(null);
-          }}
-        >
-          Zufällige Kategorie wählen
-        </button>
-        {category && <p>Ausgewählte Kategorie: <strong>{category}</strong></p>}
-      </div>
+      <button
+        onClick={drawCard}
+        disabled={deck.length === 0}
+        className={`btn p-2 border rounded mb-4 text-white ${
+          deck.length === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500"
+        }`}
+      >
+        Karte ziehen ({deck.length} übrig)
+      </button>
 
-      {category && (
-        <>
-          <button
-            onClick={handleDrawCard}
-            className="btn p-2 border rounded bg-blue-500 text-white mb-4"
-          >
-            Karte ziehen
-          </button>
-
-          {currentCard && (
-            <div className="border p-4 rounded bg-white shadow mb-4">
-              <h3 className="font-semibold mb-2">Gezogene Karte:</h3>
-              <p>{currentCard}</p>
-            </div>
-          )}
-
-          <div>
-            <h3 className="font-semibold mb-2">Dein Inventar:</h3>
-            {hiderInventory.length === 0 && <p>Keine Karten gezogen.</p>}
-            <div className="flex flex-wrap justify-center gap-2">
-              {hiderInventory.map((card, idx) => (
-                <div
-                  key={idx}
-                  className="border rounded p-2 max-w-xs bg-gray-100"
-                  style={{ minWidth: "200px" }}
-                >
-                  {card}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+      {currentCard && (
+        <div className="border p-4 rounded bg-white shadow mb-4 max-w-xl mx-auto">
+          <h3 className="font-semibold mb-2">Gezogene Karte:</h3>
+          <p>{currentCard}</p>
+        </div>
       )}
+
+      <div>
+        <h3 className="font-semibold mb-2">Dein Inventar:</h3>
+        {hiderInventory.length === 0 && <p>Keine Karten gezogen.</p>}
+        <div className="flex flex-wrap justify-center gap-2">
+          {hiderInventory.map((card, idx) => (
+            <div
+              key={idx}
+              className="border rounded p-2 max-w-xs bg-gray-100"
+              style={{ minWidth: "200px" }}
+            >
+              {card}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
