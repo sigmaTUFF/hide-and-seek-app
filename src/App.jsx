@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // Kartendefinitionen mit Erklärung und Beispiel
 const cardsWithCount = [
@@ -121,38 +121,14 @@ function getCardInfo(cardText) {
 }
 
 export default function HideAndSeekApp() {
-  // initial aus localStorage laden oder Standardwerte nehmen
-  const [team, setTeam] = useState(() => localStorage.getItem("team") || null);
-  const [deck, setDeck] = useState(() => {
-    const savedDeck = localStorage.getItem("deck");
-    return savedDeck ? JSON.parse(savedDeck) : createDeck(cardsWithCount);
-  });
-  const [hiderInventory, setHiderInventory] = useState(() => {
-    const savedInv = localStorage.getItem("hiderInventory");
-    return savedInv ? JSON.parse(savedInv) : [];
-  });
-
+  const [team, setTeam] = useState(null);
+  const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
+  const [hiderInventory, setHiderInventory] = useState([]);
   const [currentCard, setCurrentCard] = useState(null);
   const [pendingCard, setPendingCard] = useState(null);
   const [showCardDetail, setShowCardDetail] = useState(null);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
-
-  // Speichern in localStorage bei Änderungen
-  useEffect(() => {
-    if (team) {
-      localStorage.setItem("team", team);
-    } else {
-      localStorage.removeItem("team");
-    }
-  }, [team]);
-
-  useEffect(() => {
-    localStorage.setItem("deck", JSON.stringify(deck));
-  }, [deck]);
-
-  useEffect(() => {
-    localStorage.setItem("hiderInventory", JSON.stringify(hiderInventory));
-  }, [hiderInventory]);
+  const [showResetConfirm, setShowResetConfirm] = useState(false); // neu: Bestätigung sichtbar?
 
   const drawCard = () => {
     if (deck.length === 0) {
@@ -203,12 +179,13 @@ export default function HideAndSeekApp() {
     setPendingCard(null);
   };
 
-  // Reset-Funktion
+  // Funktion für das Zurücksetzen mit Reset-Bestätigung
   const resetGame = () => {
-    localStorage.removeItem("team");
-    localStorage.removeItem("deck");
-    localStorage.removeItem("hiderInventory");
+    setShowResetConfirm(true);
+  };
 
+  // Wenn bestätigt: Reset ausführen
+  const confirmReset = () => {
     setTeam(null);
     setDeck(createDeck(cardsWithCount));
     setHiderInventory([]);
@@ -216,6 +193,12 @@ export default function HideAndSeekApp() {
     setPendingCard(null);
     setShowCardDetail(null);
     setConfirmDeleteIndex(null);
+    setShowResetConfirm(false);
+  };
+
+  // Reset abbrechen
+  const cancelReset = () => {
+    setShowResetConfirm(false);
   };
 
   if (!team) {
@@ -234,12 +217,6 @@ export default function HideAndSeekApp() {
         >
           Seeker
         </button>
-        <button
-          onClick={resetGame}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Spiel zurücksetzen
-        </button>
       </div>
     );
   }
@@ -249,25 +226,12 @@ export default function HideAndSeekApp() {
       <div className="max-w-md mx-auto p-4 text-center">
         <h1 className="text-xl font-bold mb-4">Du bist im Seeker-Team</h1>
         <p>Hier kommt später das Fragebogen-Feature rein.</p>
-        <button
-          onClick={resetGame}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Spiel zurücksetzen
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto p-4 text-center">
-      <button
-        onClick={resetGame}
-        className="mb-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-      >
-        Spiel zurücksetzen
-      </button>
-
+    <div className="max-w-md mx-auto p-4 text-center flex flex-col min-h-screen">
       <h1 className="text-xl font-bold mb-4">Hide & Seek – Karten ziehen</h1>
 
       <button
@@ -351,17 +315,38 @@ export default function HideAndSeekApp() {
         </div>
       )}
 
-      {/* Bestätigungsdialog für Karte löschen */}
+      {/* Karte Detailanzeige */}
+      {showCardDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded shadow max-w-md w-full text-left">
+            <h3 className="text-xl font-bold mb-2">
+              {getCardInfo(showCardDetail)?.title || showCardDetail}
+            </h3>
+            <p className="mb-2">{getCardInfo(showCardDetail)?.description}</p>
+            <p className="italic text-gray-600 mb-4">
+              Beispiel: {getCardInfo(showCardDetail)?.example}
+            </p>
+            <button
+              onClick={() => setShowCardDetail(null)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+            >
+              Schließen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Löschen bestätigen */}
       {confirmDeleteIndex !== null && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
+          <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
             <p>Möchtest du diese Karte wirklich löschen?</p>
             <div className="mt-4 flex justify-center gap-4">
               <button
                 onClick={confirmRemove}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
               >
-                Ja, löschen
+                Löschen
               </button>
               <button
                 onClick={cancelRemove}
@@ -374,28 +359,40 @@ export default function HideAndSeekApp() {
         </div>
       )}
 
-      {/* Karten-Detailanzeige */}
-      {showCardDetail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded shadow max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">
-              {getCardInfo(showCardDetail)?.title}
-            </h2>
-            <p className="mb-2">
-              <strong>Beschreibung:</strong> {getCardInfo(showCardDetail)?.description}
+      {/* Reset-Bestätigung */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
+            <p className="mb-4 text-lg font-semibold">
+              Willst du wirklich das Spiel zurücksetzen? Alle Daten gehen verloren!
             </p>
-            <p>
-              <strong>Beispiel:</strong> {getCardInfo(showCardDetail)?.example}
-            </p>
-            <button
-              onClick={() => setShowCardDetail(null)}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
-            >
-              Schließen
-            </button>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={confirmReset}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-800"
+              >
+                Ja, zurücksetzen
+              </button>
+              <button
+                onClick={cancelReset}
+                className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-600"
+              >
+                Nein, abbrechen
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* RESET-BUTTON unten und abgetrennt */}
+      <div className="mt-auto pt-6 border-t border-gray-300">
+        <button
+          onClick={resetGame}
+          className="w-full py-3 bg-red-500 text-white rounded hover:bg-red-700 transition"
+        >
+          Spiel zurücksetzen
+        </button>
+      </div>
     </div>
   );
 }
