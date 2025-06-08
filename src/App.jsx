@@ -1,195 +1,101 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import "./App.css";
 
-// Karten-Array wie vorher (aus Platzgründen hier nur kurz skizziert)
-const cardsWithCount = [
-  { text: "+5 Minuten Bonuszeit", count: 5 },
-  { text: "+10 Minuten Bonuszeit", count: 4 },
-  { text: "+15 Minuten Bonuszeit", count: 3 },
-  { text: "+20 Minuten Bonuszeit", count: 2 },
-  { text: "+30 Minuten Bonuszeit", count: 1 },
-  { text: "Dorfgrenzen-Fluch", count: 5 },
-  { text: "Picknick-Fluch", count: 5 },
-  { text: "Ortsschild-Fluch", count: 5 },
-  { text: "Kirchturmuhr-Fluch", count: 5 },
-  { text: "Bäcker-Fluch", count: 5 },
-  { text: "Selfie-Fluch", count: 3 },
-  { text: "Feldrand-Fluch", count: 2 },
-  { text: "Zufallsfrage", count: 5 },
-  { text: "Veto", count: 4 },
-  { text: "Kopiereffekt", count: 3 },
-  { text: "Versteck-Wechsel-Karte", count: 3 },
+const cardPool = [
+  { title: "Picknick-Fluch", description: "Zwingt den Sucher, eine Runde lang zu pausieren.", count: 5 },
+  { title: "Schatten-Tarnung", description: "Du kannst dich einmal vor dem Sucher verstecken, selbst wenn er dich fast findet.", count: 4 },
+  { title: "Routen-Tausch", description: "Tausche deinen Standort mit einem anderen Hider.", count: 1 },
+  { title: "Karten-Scanner", description: "Zeigt dir die obersten 3 Karten im Stapel.", count: 3 },
+  { title: "Tarnumhang", description: "Du bist für 2 Runden unauffindbar.", count: 2 },
+  { title: "Späherblick", description: "Du darfst 2 Karten ziehen und eine behalten.", count: 5 },
+  { title: "Fake-Spur", description: "Verwirrt den Sucher für eine Runde.", count: 4 },
+  { title: "Lautlose Schuhe", description: "Du darfst dich doppelt so weit bewegen.", count: 6 },
+  { title: "Ablenkungswurf", description: "Ziehe die Aufmerksamkeit des Suchers von deinem Team ab.", count: 5 },
+  { title: "Tauschkarte", description: "Tausche eine Karte aus deinem Inventar mit einer zufälligen aus dem Stapel.", count: 5 },
+  { title: "Positionswechsel+", description: "Wechsle mit einem beliebigen Hider den Ort.", count: 1 },
+  { title: "Karte löschen", description: "Löscht eine unerwünschte Karte direkt aus dem Stapel.", count: 4 },
+  { title: "Scan-Joker", description: "Du darfst eine Karte deiner Wahl aus dem Stapel ziehen.", count: 4 },
+  { title: "Zusatz-Zug", description: "Ziehe sofort eine weitere Karte.", count: 6 }
 ];
 
-function createDeck(cardsWithCount) {
+const generateDeck = () => {
   const deck = [];
-  cardsWithCount.forEach(({ text, count }) => {
-    for (let i = 0; i < count; i++) {
-      deck.push(text);
+  cardPool.forEach((card) => {
+    for (let i = 0; i < card.count; i++) {
+      deck.push({ title: card.title, description: card.description });
     }
   });
-  return deck;
-}
+  return shuffleArray(deck);
+};
 
-export default function HideAndSeekApp() {
-  const [team, setTeam] = useState(null);
-  const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
-  const [hiderInventory, setHiderInventory] = useState([]);
-  const [currentCard, setCurrentCard] = useState(null);
-  const [replaceCardIndex, setReplaceCardIndex] = useState(null); // Index der zu ersetzenden Karte
-  const [pendingCard, setPendingCard] = useState(null); // Karte die gerade gezogen wurde und evtl ersetzt werden soll
+const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
-  // Karte ziehen
+function App() {
+  const [deck, setDeck] = useState(generateDeck());
+  const [inventory, setInventory] = useState([]);
+  const [selectedCardIndex, setSelectedCardIndex] = useState(null);
+  const [popupCard, setPopupCard] = useState(null);
+
   const drawCard = () => {
-    if (deck.length === 0) {
-      setCurrentCard("Keine Karten mehr im Stapel!");
-      return;
-    }
+    if (deck.length === 0) return;
+    const [topCard, ...rest] = deck;
+    setDeck(rest);
 
-    const randomIndex = Math.floor(Math.random() * deck.length);
-    const card = deck[randomIndex];
-
-    const newDeck = [...deck];
-    newDeck.splice(randomIndex, 1);
-    setDeck(newDeck);
-
-    // Wenn Inventar voll ist, Karte als "pending" setzen und Ersatz auswählen lassen
-    if (hiderInventory.length >= 6) {
-      setPendingCard(card);
-      setReplaceCardIndex(null); // noch nichts ausgewählt
+    if (inventory.length < 6) {
+      setInventory([...inventory, topCard]);
     } else {
-      setHiderInventory((prev) => [...prev, card]);
-      setCurrentCard(card);
+      setSelectedCardIndex(0); // default first card to be replaced
+      const replace = window.confirm("Inventar voll. Möchtest du eine Karte ersetzen?");
+      if (replace) {
+        const index = prompt("Welche Karte soll ersetzt werden? Gib eine Zahl von 1 bis 6 ein:");
+        const i = parseInt(index) - 1;
+        if (!isNaN(i) && i >= 0 && i < 6) {
+          const updated = [...inventory];
+          updated[i] = topCard;
+          setInventory(updated);
+        } else {
+          alert("Ungültiger Index. Karte verworfen.");
+        }
+      } else {
+        alert("Karte verworfen.");
+      }
     }
   };
 
-  // Karte im Inventar löschen
   const removeCard = (index) => {
-    setHiderInventory((prev) => prev.filter((_, i) => i !== index));
+    const newInventory = [...inventory];
+    newInventory.splice(index, 1);
+    setInventory(newInventory);
   };
-
-  // Ersatzkarte setzen (wenn Inventar voll)
-  const replaceCard = (index) => {
-    if (pendingCard === null) return;
-
-    setHiderInventory((prev) => {
-      const newInv = [...prev];
-      newInv[index] = pendingCard;
-      return newInv;
-    });
-    setCurrentCard(pendingCard);
-    setPendingCard(null);
-    setReplaceCardIndex(null);
-  };
-
-  if (!team) {
-    return (
-      <div className="max-w-md mx-auto p-4 text-center">
-        <h1 className="text-xl font-bold mb-4">Wähle dein Team</h1>
-        <button
-          className="btn m-2 p-2 border rounded bg-blue-500 text-white"
-          onClick={() => setTeam("hider")}
-        >
-          Hider
-        </button>
-        <button
-          className="btn m-2 p-2 border rounded bg-green-500 text-white"
-          onClick={() => setTeam("seeker")}
-        >
-          Seeker
-        </button>
-      </div>
-    );
-  }
-
-  if (team === "seeker") {
-    return (
-      <div className="max-w-md mx-auto p-4 text-center">
-        <h1 className="text-xl font-bold mb-4">Du bist im Seeker-Team</h1>
-        <p>Hier kommt später das Fragebogen-Feature rein.</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-md mx-auto p-4 text-center">
-      <h1 className="text-xl font-bold mb-4">Hide & Seek – Karten ziehen</h1>
-
-      <button
-        onClick={drawCard}
-        disabled={deck.length === 0 || pendingCard !== null}
-        className={`btn p-2 border rounded mb-4 text-white ${
-          deck.length === 0 || pendingCard !== null
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-500"
-        }`}
-      >
-        Karte ziehen ({deck.length} übrig)
+    <div className="App">
+      <h1>🎴 Hider Kartenstapel</h1>
+      <button onClick={drawCard} className="draw-button">
+        Zufällige Karte ziehen
       </button>
 
-      {currentCard && (
-        <div className="border p-4 rounded bg-white shadow mb-4 max-w-xl mx-auto">
-          <h3 className="font-semibold mb-2">Gezogene Karte:</h3>
-          <p>{currentCard}</p>
-        </div>
-      )}
-
-      <div>
-        <h3 className="font-semibold mb-2">Dein Inventar (max. 6 Karten):</h3>
-        {hiderInventory.length === 0 && <p>Keine Karten gezogen.</p>}
-        <div className="flex flex-wrap justify-center gap-2">
-          {hiderInventory.map((card, idx) => (
-            <div
-              key={idx}
-              className="border rounded p-2 max-w-xs bg-gray-100 flex items-center justify-between"
-              style={{ minWidth: "200px" }}
-            >
-              <span>{card}</span>
-              <button
-                onClick={() => removeCard(idx)}
-                className="ml-2 px-2 py-0.5 bg-red-500 text-white rounded hover:bg-red-700"
-                title="Karte löschen"
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-        </div>
+      <h2>👜 Inventar ({inventory.length}/6)</h2>
+      <div className="inventory">
+        {inventory.map((card, idx) => (
+          <div key={idx} className="card-small">
+            <strong>{card.title}</strong>
+            <button onClick={() => setPopupCard(card)}>ℹ️</button>
+            <button onClick={() => removeCard(idx)}>❌</button>
+          </div>
+        ))}
       </div>
 
-      {/* Dialog für Ersatzkarte */}
-      {pendingCard && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
-            <h3 className="text-lg font-bold mb-4">
-              Inventar voll! Welche Karte möchtest du ersetzen?
-            </h3>
-            <p className="mb-4 font-semibold">Neue Karte:</p>
-            <div className="border p-4 mb-4 bg-gray-100 rounded">{pendingCard}</div>
-
-            <div className="flex flex-wrap justify-center gap-2 max-h-64 overflow-y-auto">
-              {hiderInventory.map((card, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => replaceCard(idx)}
-                  className="border p-2 rounded bg-blue-500 text-white hover:bg-blue-700 max-w-xs"
-                >
-                  {card}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => {
-                // Karte verwerfen, nicht ersetzen
-                setPendingCard(null);
-              }}
-              className="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            >
-              Neue Karte verwerfen
-            </button>
+      {popupCard && (
+        <div className="card-popup" onClick={() => setPopupCard(null)}>
+          <div className="card-large">
+            <h2>{popupCard.title}</h2>
+            <p>{popupCard.description}</p>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+export default App;
