@@ -1,23 +1,103 @@
 import { useState } from "react";
 
-// Karten-Array wie vorher (aus Platzgründen hier nur kurz skizziert)
+// Kartendefinitionen mit Erklärung und Beispiel
 const cardsWithCount = [
-  { text: "+5 Minuten Bonuszeit", count: 5 },
-  { text: "+10 Minuten Bonuszeit", count: 4 },
-  { text: "+15 Minuten Bonuszeit", count: 3 },
-  { text: "+20 Minuten Bonuszeit", count: 2 },
-  { text: "+30 Minuten Bonuszeit", count: 1 },
-  { text: "Dorfgrenzen-Fluch", count: 5 },
-  { text: "Picknick-Fluch", count: 5 },
-  { text: "Ortsschild-Fluch", count: 5 },
-  { text: "Kirchturmuhr-Fluch", count: 5 },
-  { text: "Bäcker-Fluch", count: 5 },
-  { text: "Selfie-Fluch", count: 3 },
-  { text: "Feldrand-Fluch", count: 2 },
-  { text: "Zufallsfrage", count: 5 },
-  { text: "Veto", count: 4 },
-  { text: "Kopiereffekt", count: 3 },
-  { text: "Versteck-Wechsel-Karte", count: 3 },
+  {
+    text: "+5 Minuten Bonuszeit",
+    count: 5,
+    description: "Du erhältst 5 Minuten extra Zeit, bevor die Sucher starten.",
+    example: "Start ist 15:00 – du darfst dich bis 15:05 verstecken.",
+  },
+  {
+    text: "+10 Minuten Bonuszeit",
+    count: 4,
+    description: "Du bekommst 10 Minuten extra Versteckzeit.",
+    example: "Start ist 15:00 – du darfst dich bis 15:10 verstecken.",
+  },
+  {
+    text: "+15 Minuten Bonuszeit",
+    count: 3,
+    description: "Du bekommst 15 Minuten extra Versteckzeit.",
+    example: "Start ist 15:00 – du darfst dich bis 15:15 verstecken.",
+  },
+  {
+    text: "+20 Minuten Bonuszeit",
+    count: 2,
+    description: "Du bekommst 20 Minuten extra Versteckzeit.",
+    example: "Start ist 15:00 – du darfst dich bis 15:20 verstecken.",
+  },
+  {
+    text: "+30 Minuten Bonuszeit",
+    count: 1,
+    description: "Du bekommst 30 Minuten extra Versteckzeit.",
+    example: "Start ist 15:00 – du darfst dich bis 15:30 verstecken.",
+  },
+  {
+    text: "Dorfgrenzen-Fluch",
+    count: 5,
+    description: "Alle Hider dürfen sich nur innerhalb bestimmter Orte verstecken.",
+    example: "Nur innerhalb der Kirche, dem Spielplatz und dem Marktplatz.",
+  },
+  {
+    text: "Picknick-Fluch",
+    count: 5,
+    description: "Du darfst dich nur dort verstecken, wo man theoretisch ein Picknick machen kann.",
+    example: "Zum Beispiel: Wiese, Parkbank, Tisch im Freien.",
+  },
+  {
+    text: "Ortsschild-Fluch",
+    count: 5,
+    description: "Du darfst dich nur in der Nähe eines Ortsschilds verstecken.",
+    example: "Innerhalb von 20 Metern um ein Ortsschild.",
+  },
+  {
+    text: "Kirchturmuhr-Fluch",
+    count: 5,
+    description: "Du darfst dich nur in Sichtweite der Kirchturmuhr verstecken.",
+    example: "Wo man direkt die Uhrzeit auf dem Turm erkennen kann.",
+  },
+  {
+    text: "Bäcker-Fluch",
+    count: 5,
+    description: "Du darfst dich nur in der Nähe eines Bäckers verstecken.",
+    example: "Hinter dem Gebäude, am Lieferhof oder im Hinterhof.",
+  },
+  {
+    text: "Selfie-Fluch",
+    count: 3,
+    description: "Du musst beim Verstecken ein Selfie an einem bestimmten Ort machen.",
+    example: "Zum Beispiel mit einem Ortsschild oder Denkmal im Hintergrund.",
+  },
+  {
+    text: "Feldrand-Fluch",
+    count: 2,
+    description: "Du darfst dich nur am Rand eines Feldes verstecken.",
+    example: "Nicht mitten im Feld, sondern am Übergang zu Wiese/Weg.",
+  },
+  {
+    text: "Zufallsfrage",
+    count: 5,
+    description: "Ein Mitspieler stellt dir spontan eine Frage. Beantworte sie richtig, sonst verlierst du deine Karte.",
+    example: "Z. B.: Wie viele Beine hat eine Spinne?",
+  },
+  {
+    text: "Veto",
+    count: 4,
+    description: "Du kannst eine Regel oder Karte ablehnen.",
+    example: "Ein Hider spielt den 'Dorfgrenzen-Fluch' – du setzt 'Veto' ein.",
+  },
+  {
+    text: "Kopiereffekt",
+    count: 3,
+    description: "Du kopierst den Effekt der letzten gespielten Karte.",
+    example: "Ein Spieler nutzt +10 Minuten – du bekommst auch +10 Minuten.",
+  },
+  {
+    text: "Versteck-Wechsel-Karte",
+    count: 3,
+    description: "Du darfst dein Versteck einmal während des Spiels wechseln.",
+    example: "Nach 10 Minuten tauschst du dein Versteck.",
+  },
 ];
 
 function createDeck(cardsWithCount) {
@@ -30,12 +110,21 @@ function createDeck(cardsWithCount) {
   return deck;
 }
 
+function getCardInfo(cardText) {
+  const card = cardsWithCount.find((c) => c.text === cardText);
+  if (!card) return null;
+  return {
+    title: card.text,
+    description: card.description || "Keine Beschreibung vorhanden.",
+    example: card.example || "Kein Beispiel vorhanden.",
+  };
+}
+
 export default function HideAndSeekApp() {
   const [team, setTeam] = useState(null);
   const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
   const [hiderInventory, setHiderInventory] = useState([]);
   const [currentCard, setCurrentCard] = useState(null);
-  const [replaceCardIndex, setReplaceCardIndex] = useState(null);
   const [pendingCard, setPendingCard] = useState(null);
   const [showCardDetail, setShowCardDetail] = useState(null);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
@@ -55,7 +144,6 @@ export default function HideAndSeekApp() {
 
     if (hiderInventory.length >= 6) {
       setPendingCard(card);
-      setReplaceCardIndex(null);
     } else {
       setHiderInventory((prev) => [...prev, card]);
       setCurrentCard(card);
@@ -63,19 +151,31 @@ export default function HideAndSeekApp() {
   };
 
   const removeCard = (index) => {
-    setHiderInventory((prev) => prev.filter((_, i) => i !== index));
+    setConfirmDeleteIndex(index);
+  };
+
+  const confirmRemove = () => {
+    setHiderInventory((prev) =>
+      prev.filter((_, i) => i !== confirmDeleteIndex)
+    );
+    setConfirmDeleteIndex(null);
+  };
+
+  const cancelRemove = () => {
+    setConfirmDeleteIndex(null);
   };
 
   const replaceCard = (index) => {
-    if (pendingCard === null) return;
+    if (!pendingCard) return;
+
     setHiderInventory((prev) => {
       const newInv = [...prev];
       newInv[index] = pendingCard;
       return newInv;
     });
+
     setCurrentCard(pendingCard);
     setPendingCard(null);
-    setReplaceCardIndex(null);
   };
 
   if (!team) {
@@ -137,20 +237,20 @@ export default function HideAndSeekApp() {
           {hiderInventory.map((card, idx) => (
             <div
               key={idx}
-              className="border rounded p-2 max-w-xs bg-gray-100 flex items-center justify-between"
+              className="border rounded p-2 bg-gray-100 flex items-center justify-between gap-2"
               style={{ minWidth: "200px" }}
             >
-              <span className="text-left">{card}</span>
-              <div className="flex items-center space-x-2 ml-2">
+              <span>{card}</span>
+              <div className="flex gap-1">
                 <button
                   onClick={() => setShowCardDetail(card)}
-                  className="px-2 py-0.5 bg-yellow-400 text-white rounded hover:bg-yellow-600"
-                  title="Karte anzeigen"
+                  className="px-2 py-0.5 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                  title="Details anzeigen"
                 >
                   i
                 </button>
                 <button
-                  onClick={() => setConfirmDeleteIndex(idx)}
+                  onClick={() => removeCard(idx)}
                   className="px-2 py-0.5 bg-red-500 text-white rounded hover:bg-red-700"
                   title="Karte löschen"
                 >
@@ -162,15 +262,17 @@ export default function HideAndSeekApp() {
         </div>
       </div>
 
+      {/* Ersatzkarte */}
       {pendingCard && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
             <h3 className="text-lg font-bold mb-4">
               Inventar voll! Welche Karte möchtest du ersetzen?
             </h3>
-            <p className="mb-4 font-semibold">Neue Karte:</p>
-            <div className="border p-4 mb-4 bg-gray-100 rounded">{pendingCard}</div>
-
+            <p className="mb-2 font-semibold">Neue Karte:</p>
+            <div className="border p-4 mb-4 bg-gray-100 rounded">
+              {pendingCard}
+            </div>
             <div className="flex flex-wrap justify-center gap-2 max-h-64 overflow-y-auto">
               {hiderInventory.map((card, idx) => (
                 <button
@@ -182,7 +284,6 @@ export default function HideAndSeekApp() {
                 </button>
               ))}
             </div>
-
             <button
               onClick={() => setPendingCard(null)}
               className="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
@@ -193,45 +294,51 @@ export default function HideAndSeekApp() {
         </div>
       )}
 
-      {/* Große Spielkarte anzeigen */}
+      {/* Info-Ansicht */}
       {showCardDetail && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full aspect-[3/4] flex flex-col justify-between">
-            <div>
-              <h2 className="text-xl font-bold mb-2 text-center">{showCardDetail}</h2>
-              <p className="text-gray-700 text-sm text-center">
-                Diese Karte hat einen speziellen Effekt im Spiel.
-              </p>
-            </div>
+          <div className="bg-white w-full max-w-sm rounded-lg p-6 shadow-lg relative">
             <button
               onClick={() => setShowCardDetail(null)}
-              className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-lg"
             >
-              Schließen
+              &times;
             </button>
+            {(() => {
+              const info = getCardInfo(showCardDetail);
+              return (
+                <>
+                  <h2 className="text-xl font-bold mb-4 text-center">
+                    {info?.title}
+                  </h2>
+                  <p className="text-gray-800 text-sm mb-2 text-center">
+                    {info?.description}
+                  </p>
+                  <p className="text-gray-500 text-xs italic text-center">
+                    Beispiel: {info?.example}
+                  </p>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
 
-      {/* Löschbestätigung */}
+      {/* Bestätigung zum Löschen */}
       {confirmDeleteIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white p-6 rounded shadow max-w-sm text-center">
-            <h3 className="text-lg font-bold mb-4">Karte wirklich löschen?</h3>
-            <p className="mb-4">{hiderInventory[confirmDeleteIndex]}</p>
-            <div className="flex justify-center space-x-4">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white p-6 rounded shadow text-center">
+            <p className="mb-4">Diese Karte wirklich löschen?</p>
+            <div className="flex justify-center gap-4">
               <button
-                onClick={() => {
-                  removeCard(confirmDeleteIndex);
-                  setConfirmDeleteIndex(null);
-                }}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
+                onClick={confirmRemove}
+                className="px-4 py-2 bg-red-500 text-white rounded"
               >
                 Löschen
               </button>
               <button
-                onClick={() => setConfirmDeleteIndex(null)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                onClick={cancelRemove}
+                className="px-4 py-2 bg-gray-300 rounded"
               >
                 Abbrechen
               </button>
@@ -242,3 +349,4 @@ export default function HideAndSeekApp() {
     </div>
   );
 }
+
