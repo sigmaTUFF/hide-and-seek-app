@@ -35,10 +35,11 @@ export default function HideAndSeekApp() {
   const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
   const [hiderInventory, setHiderInventory] = useState([]);
   const [currentCard, setCurrentCard] = useState(null);
-  const [replaceCardIndex, setReplaceCardIndex] = useState(null); // Index der zu ersetzenden Karte
-  const [pendingCard, setPendingCard] = useState(null); // Karte die gerade gezogen wurde und evtl ersetzt werden soll
+  const [replaceCardIndex, setReplaceCardIndex] = useState(null);
+  const [pendingCard, setPendingCard] = useState(null);
+  const [showCardDetail, setShowCardDetail] = useState(null);
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
 
-  // Karte ziehen
   const drawCard = () => {
     if (deck.length === 0) {
       setCurrentCard("Keine Karten mehr im Stapel!");
@@ -52,25 +53,21 @@ export default function HideAndSeekApp() {
     newDeck.splice(randomIndex, 1);
     setDeck(newDeck);
 
-    // Wenn Inventar voll ist, Karte als "pending" setzen und Ersatz auswählen lassen
     if (hiderInventory.length >= 6) {
       setPendingCard(card);
-      setReplaceCardIndex(null); // noch nichts ausgewählt
+      setReplaceCardIndex(null);
     } else {
       setHiderInventory((prev) => [...prev, card]);
       setCurrentCard(card);
     }
   };
 
-  // Karte im Inventar löschen
   const removeCard = (index) => {
     setHiderInventory((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Ersatzkarte setzen (wenn Inventar voll)
   const replaceCard = (index) => {
     if (pendingCard === null) return;
-
     setHiderInventory((prev) => {
       const newInv = [...prev];
       newInv[index] = pendingCard;
@@ -143,20 +140,28 @@ export default function HideAndSeekApp() {
               className="border rounded p-2 max-w-xs bg-gray-100 flex items-center justify-between"
               style={{ minWidth: "200px" }}
             >
-              <span>{card}</span>
-              <button
-                onClick={() => removeCard(idx)}
-                className="ml-2 px-2 py-0.5 bg-red-500 text-white rounded hover:bg-red-700"
-                title="Karte löschen"
-              >
-                &times;
-              </button>
+              <span className="text-left">{card}</span>
+              <div className="flex items-center space-x-2 ml-2">
+                <button
+                  onClick={() => setShowCardDetail(card)}
+                  className="px-2 py-0.5 bg-yellow-400 text-white rounded hover:bg-yellow-600"
+                  title="Karte anzeigen"
+                >
+                  i
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteIndex(idx)}
+                  className="px-2 py-0.5 bg-red-500 text-white rounded hover:bg-red-700"
+                  title="Karte löschen"
+                >
+                  &times;
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Dialog für Ersatzkarte */}
       {pendingCard && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
@@ -179,10 +184,7 @@ export default function HideAndSeekApp() {
             </div>
 
             <button
-              onClick={() => {
-                // Karte verwerfen, nicht ersetzen
-                setPendingCard(null);
-              }}
+              onClick={() => setPendingCard(null)}
               className="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
             >
               Neue Karte verwerfen
@@ -190,7 +192,53 @@ export default function HideAndSeekApp() {
           </div>
         </div>
       )}
+
+      {/* Große Spielkarte anzeigen */}
+      {showCardDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full aspect-[3/4] flex flex-col justify-between">
+            <div>
+              <h2 className="text-xl font-bold mb-2 text-center">{showCardDetail}</h2>
+              <p className="text-gray-700 text-sm text-center">
+                Diese Karte hat einen speziellen Effekt im Spiel.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCardDetail(null)}
+              className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Schließen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Löschbestätigung */}
+      {confirmDeleteIndex !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white p-6 rounded shadow max-w-sm text-center">
+            <h3 className="text-lg font-bold mb-4">Karte wirklich löschen?</h3>
+            <p className="mb-4">{hiderInventory[confirmDeleteIndex]}</p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => {
+                  removeCard(confirmDeleteIndex);
+                  setConfirmDeleteIndex(null);
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
+              >
+                Löschen
+              </button>
+              <button
+                onClick={() => setConfirmDeleteIndex(null)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
