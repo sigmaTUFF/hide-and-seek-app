@@ -28,19 +28,45 @@ const powerUpCards = [
   "Versteck-Wechsel-Karte: Alles wird 30 Minuten eingefroren. Du darfst dein Versteck wechseln. (Nur 1x im Spiel)",
 ];
 
-const drawRandom = (cards) => {
+const drawRandom = (cards: string[]) => {
   const index = Math.floor(Math.random() * cards.length);
   return cards[index];
 };
 
 export default function HideAndSeekApp() {
-  const [bonus, setBonus] = useState(null);
-  const [curse, setCurse] = useState(null);
-  const [power, setPower] = useState(null);
+  const [role, setRole] = useState<"hider" | "seeker" | null>(null);
+  const [bonus, setBonus] = useState<string | null>(null);
+  const [curse, setCurse] = useState<string | null>(null);
+  const [power, setPower] = useState<string | null>(null);
+
+  if (!role) {
+    return (
+      <div className="max-w-md mx-auto p-4 text-center">
+        <h1 className="text-xl font-bold mb-4">Hide & Seek</h1>
+        <p className="mb-4">Wähle dein Team:</p>
+        <div className="flex justify-center gap-4">
+          <Button onClick={() => setRole("hider")}>Ich bin ein Hider</Button>
+          <Button onClick={() => setRole("seeker")}>Ich bin ein Seeker</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (role === "seeker") {
+    return (
+      <div className="max-w-md mx-auto p-4 text-center">
+        <h1 className="text-xl font-bold mb-4">Seeker-Modus</h1>
+        <p>Hier kommt später der Fragebogen hin!</p>
+        <Button className="mt-4" onClick={() => setRole(null)}>
+          Zurück
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto p-4 text-center">
-      <h1 className="text-xl font-bold mb-4">Hide & Seek – Karten ziehen</h1>
+      <h1 className="text-xl font-bold mb-4">Hide & Seek – Hider-Modus</h1>
 
       <Tabs defaultValue="bonus" className="w-full">
         <TabsList className="grid grid-cols-3 mb-4">
@@ -82,6 +108,11 @@ export default function HideAndSeekApp() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Button className="mt-4" onClick={() => setRole(null)}>
+        Zurück zur Auswahl
+      </Button>
     </div>
   );
 }
+
