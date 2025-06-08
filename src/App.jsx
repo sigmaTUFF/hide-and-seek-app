@@ -128,6 +128,21 @@ export default function HideAndSeekApp() {
   const [pendingCard, setPendingCard] = useState(null);
   const [showCardDetail, setShowCardDetail] = useState(null);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
+  import { useEffect } from "react"; // Falls noch nicht oben importiert
+
+// Inventar aus LocalStorage laden
+useEffect(() => {
+  const savedInventory = localStorage.getItem("hiderInventory");
+  if (savedInventory) {
+    setHiderInventory(JSON.parse(savedInventory));
+  }
+}, []);
+
+// Inventar speichern, wenn es sich ändert
+useEffect(() => {
+  localStorage.setItem("hiderInventory", JSON.stringify(hiderInventory));
+}, [hiderInventory]);
+
   const [showResetConfirm, setShowResetConfirm] = useState(false); // neu: Bestätigung sichtbar?
 
   const drawCard = () => {
@@ -189,6 +204,7 @@ export default function HideAndSeekApp() {
     setTeam(null);
     setDeck(createDeck(cardsWithCount));
     setHiderInventory([]);
+    localStorage.removeItem("hiderInventory");
     setCurrentCard(null);
     setPendingCard(null);
     setShowCardDetail(null);
