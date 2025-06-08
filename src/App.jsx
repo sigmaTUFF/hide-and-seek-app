@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const bonusCards = [
   "+5 Minuten Bonuszeit",
@@ -25,44 +28,91 @@ const powerUpCards = [
   "Versteck-Wechsel-Karte: Alles wird 30 Minuten eingefroren. Du darfst dein Versteck wechseln. (Nur 1x im Spiel)",
 ];
 
-const drawRandom = (cards) => {
+const drawRandom = (cards: string[]) => {
   const index = Math.floor(Math.random() * cards.length);
   return cards[index];
 };
 
-export default function App() {
-  const [bonus, setBonus] = useState(null);
-  const [curse, setCurse] = useState(null);
-  const [power, setPower] = useState(null);
+export default function HideAndSeekApp() {
+  const [role, setRole] = useState<"hider" | "seeker" | null>(null);
+  const [bonus, setBonus] = useState<string | null>(null);
+  const [curse, setCurse] = useState<string | null>(null);
+  const [power, setPower] = useState<string | null>(null);
+
+  if (!role) {
+    return (
+      <div className="max-w-md mx-auto p-4 text-center">
+        <h1 className="text-xl font-bold mb-4">Hide & Seek</h1>
+        <p className="mb-4">Wähle dein Team:</p>
+        <div className="flex justify-center gap-4">
+          <Button onClick={() => setRole("hider")}>Ich bin ein Hider</Button>
+          <Button onClick={() => setRole("seeker")}>Ich bin ein Seeker</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (role === "seeker") {
+    return (
+      <div className="max-w-md mx-auto p-4 text-center">
+        <h1 className="text-xl font-bold mb-4">Seeker-Modus</h1>
+        <p>Hier kommt später der Fragebogen hin!</p>
+        <Button className="mt-4" onClick={() => setRole(null)}>
+          Zurück
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto p-4 text-center">
-      <h1 className="text-xl font-bold mb-4">Hide & Seek – Karten ziehen</h1>
+      <h1 className="text-xl font-bold mb-4">Hide & Seek – Hider-Modus</h1>
 
-      <div className="flex justify-center mb-4 space-x-4">
-        <button
-          onClick={() => setBonus(drawRandom(bonusCards))}
-          className="bg-blue-500 text-white py-2 px-4 rounded"
-        >
-          Bonuskarte ziehen
-        </button>
-        <button
-          onClick={() => setCurse(drawRandom(curseCards))}
-          className="bg-red-500 text-white py-2 px-4 rounded"
-        >
-          Fluchkarte ziehen
-        </button>
-        <button
-          onClick={() => setPower(drawRandom(powerUpCards))}
-          className="bg-green-500 text-white py-2 px-4 rounded"
-        >
-          Power-Up ziehen
-        </button>
-      </div>
+      <Tabs defaultValue="bonus" className="w-full">
+        <TabsList className="grid grid-cols-3 mb-4">
+          <TabsTrigger value="bonus">Bonus</TabsTrigger>
+          <TabsTrigger value="curse">Fluch</TabsTrigger>
+          <TabsTrigger value="power">Power-Up</TabsTrigger>
+        </TabsList>
 
-      {bonus && <p className="mb-2">Bonus: {bonus}</p>}
-      {curse && <p className="mb-2">Fluch: {curse}</p>}
-      {power && <p className="mb-2">Power-Up: {power}</p>}
+        <TabsContent value="bonus">
+          <Card>
+            <CardContent className="p-4">
+              <Button onClick={() => setBonus(drawRandom(bonusCards))} className="mb-2">
+                Bonuskarte ziehen
+              </Button>
+              {bonus && <p>{bonus}</p>}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="curse">
+          <Card>
+            <CardContent className="p-4">
+              <Button onClick={() => setCurse(drawRandom(curseCards))} className="mb-2">
+                Fluchkarte ziehen
+              </Button>
+              {curse && <p>{curse}</p>}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="power">
+          <Card>
+            <CardContent className="p-4">
+              <Button onClick={() => setPower(drawRandom(powerUpCards))} className="mb-2">
+                Power-Up ziehen
+              </Button>
+              {power && <p>{power}</p>}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Button className="mt-4" onClick={() => setRole(null)}>
+        Zurück zur Auswahl
+      </Button>
     </div>
   );
 }
+
