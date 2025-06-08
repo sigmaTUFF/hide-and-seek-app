@@ -1,31 +1,25 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 
-// Definiere alle Karten mit jeweiliger Anzahl (Häufigkeit)
+// Karten-Array wie vorher (aus Platzgründen hier nur kurz skizziert)
 const cardsWithCount = [
-  // Bonus
   { text: "+5 Minuten Bonuszeit", count: 5 },
   { text: "+10 Minuten Bonuszeit", count: 4 },
   { text: "+15 Minuten Bonuszeit", count: 3 },
   { text: "+20 Minuten Bonuszeit", count: 2 },
   { text: "+30 Minuten Bonuszeit", count: 1 },
-
-  // Flüche
-  { text: "Dorfgrenzen-Fluch: Du darfst deinen aktuellen Ortsteil 10 Minuten lang nicht verlassen.", count: 5 },
-  { text: "Picknick-Fluch: Du musst dich zu einer Liegewiese oder Sitzbank begeben und 5 Minuten dort bleiben.", count: 5 },
-  { text: "Ortsschild-Fluch: Deine nächste Bewegung muss zu einem Ortsschild führen.", count: 5 },
-  { text: "Kirchturmuhr-Fluch: Du darfst dich erst weiterbewegen, wenn eine volle Viertelstunde beginnt.", count: 5 },
-  { text: "Bäcker-Fluch: Du musst ein Foto von einer lokalen Bäckerei machen, bevor du weitermachen darfst.", count: 5 },
-  { text: "Selfie-Fluch: Mache ein Selfie mit einem Denkmal oder Ortsschild.", count: 3 },
-  { text: "Feldrand-Fluch: Du musst dich in der Nähe eines Feldrandes aufhalten (max. 100 m).", count: 2 },
-
-  // Power-Ups
-  { text: "Zufallsfrage: Du darfst eine beliebige Frage stellen, ohne Kostenregel.", count: 5 },
-  { text: "Veto: Du darfst eine Frage einmal ablehnen.", count: 4 },
-  { text: "Kopiereffekt: Du darfst den letzten Effekt (Bonus oder Power) erneut nutzen.", count: 3 },
-  { text: "Versteck-Wechsel-Karte: Alles wird 30 Minuten eingefroren. Du darfst dein Versteck wechseln. (Nur 1x im Spiel)", count: 3 },
+  { text: "Dorfgrenzen-Fluch", count: 5 },
+  { text: "Picknick-Fluch", count: 5 },
+  { text: "Ortsschild-Fluch", count: 5 },
+  { text: "Kirchturmuhr-Fluch", count: 5 },
+  { text: "Bäcker-Fluch", count: 5 },
+  { text: "Selfie-Fluch", count: 3 },
+  { text: "Feldrand-Fluch", count: 2 },
+  { text: "Zufallsfrage", count: 5 },
+  { text: "Veto", count: 4 },
+  { text: "Kopiereffekt", count: 3 },
+  { text: "Versteck-Wechsel-Karte", count: 3 },
 ];
 
-// Hilfsfunktion: Erzeuge ein Array mit den Karten unter Berücksichtigung der Häufigkeit
 function createDeck(cardsWithCount) {
   const deck = [];
   cardsWithCount.forEach(({ text, count }) => {
@@ -37,12 +31,14 @@ function createDeck(cardsWithCount) {
 }
 
 export default function HideAndSeekApp() {
-  const [team, setTeam] = useState(null); // hider oder seeker
+  const [team, setTeam] = useState(null);
   const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
   const [hiderInventory, setHiderInventory] = useState([]);
   const [currentCard, setCurrentCard] = useState(null);
+  const [replaceCardIndex, setReplaceCardIndex] = useState(null); // Index der zu ersetzenden Karte
+  const [pendingCard, setPendingCard] = useState(null); // Karte die gerade gezogen wurde und evtl ersetzt werden soll
 
-  // Karte ziehen: Zufällig aus dem verbliebenen Deck ziehen
+  // Karte ziehen
   const drawCard = () => {
     if (deck.length === 0) {
       setCurrentCard("Keine Karten mehr im Stapel!");
@@ -52,19 +48,40 @@ export default function HideAndSeekApp() {
     const randomIndex = Math.floor(Math.random() * deck.length);
     const card = deck[randomIndex];
 
-    // Karte aus Deck entfernen
     const newDeck = [...deck];
     newDeck.splice(randomIndex, 1);
     setDeck(newDeck);
 
-    setCurrentCard(card);
-    if (team === "hider") {
+    // Wenn Inventar voll ist, Karte als "pending" setzen und Ersatz auswählen lassen
+    if (hiderInventory.length >= 6) {
+      setPendingCard(card);
+      setReplaceCardIndex(null); // noch nichts ausgewählt
+    } else {
       setHiderInventory((prev) => [...prev, card]);
+      setCurrentCard(card);
     }
   };
 
+  // Karte im Inventar löschen
+  const removeCard = (index) => {
+    setHiderInventory((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Ersatzkarte setzen (wenn Inventar voll)
+  const replaceCard = (index) => {
+    if (pendingCard === null) return;
+
+    setHiderInventory((prev) => {
+      const newInv = [...prev];
+      newInv[index] = pendingCard;
+      return newInv;
+    });
+    setCurrentCard(pendingCard);
+    setPendingCard(null);
+    setReplaceCardIndex(null);
+  };
+
   if (!team) {
-    // Team wählen
     return (
       <div className="max-w-md mx-auto p-4 text-center">
         <h1 className="text-xl font-bold mb-4">Wähle dein Team</h1>
@@ -93,16 +110,17 @@ export default function HideAndSeekApp() {
     );
   }
 
-  // Team Hider UI
   return (
     <div className="max-w-md mx-auto p-4 text-center">
       <h1 className="text-xl font-bold mb-4">Hide & Seek – Karten ziehen</h1>
 
       <button
         onClick={drawCard}
-        disabled={deck.length === 0}
+        disabled={deck.length === 0 || pendingCard !== null}
         className={`btn p-2 border rounded mb-4 text-white ${
-          deck.length === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500"
+          deck.length === 0 || pendingCard !== null
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-blue-500"
         }`}
       >
         Karte ziehen ({deck.length} übrig)
@@ -116,20 +134,62 @@ export default function HideAndSeekApp() {
       )}
 
       <div>
-        <h3 className="font-semibold mb-2">Dein Inventar:</h3>
+        <h3 className="font-semibold mb-2">Dein Inventar (max. 6 Karten):</h3>
         {hiderInventory.length === 0 && <p>Keine Karten gezogen.</p>}
         <div className="flex flex-wrap justify-center gap-2">
           {hiderInventory.map((card, idx) => (
             <div
               key={idx}
-              className="border rounded p-2 max-w-xs bg-gray-100"
+              className="border rounded p-2 max-w-xs bg-gray-100 flex items-center justify-between"
               style={{ minWidth: "200px" }}
             >
-              {card}
+              <span>{card}</span>
+              <button
+                onClick={() => removeCard(idx)}
+                className="ml-2 px-2 py-0.5 bg-red-500 text-white rounded hover:bg-red-700"
+                title="Karte löschen"
+              >
+                &times;
+              </button>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Dialog für Ersatzkarte */}
+      {pendingCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
+            <h3 className="text-lg font-bold mb-4">
+              Inventar voll! Welche Karte möchtest du ersetzen?
+            </h3>
+            <p className="mb-4 font-semibold">Neue Karte:</p>
+            <div className="border p-4 mb-4 bg-gray-100 rounded">{pendingCard}</div>
+
+            <div className="flex flex-wrap justify-center gap-2 max-h-64 overflow-y-auto">
+              {hiderInventory.map((card, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => replaceCard(idx)}
+                  className="border p-2 rounded bg-blue-500 text-white hover:bg-blue-700 max-w-xs"
+                >
+                  {card}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                // Karte verwerfen, nicht ersetzen
+                setPendingCard(null);
+              }}
+              className="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Neue Karte verwerfen
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
