@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Kartendefinitionen mit Erklärung und Beispiel
 const cardsWithCount = [
@@ -121,13 +121,38 @@ function getCardInfo(cardText) {
 }
 
 export default function HideAndSeekApp() {
-  const [team, setTeam] = useState(null);
-  const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
-  const [hiderInventory, setHiderInventory] = useState([]);
+  // initial aus localStorage laden oder Standardwerte nehmen
+  const [team, setTeam] = useState(() => localStorage.getItem("team") || null);
+  const [deck, setDeck] = useState(() => {
+    const savedDeck = localStorage.getItem("deck");
+    return savedDeck ? JSON.parse(savedDeck) : createDeck(cardsWithCount);
+  });
+  const [hiderInventory, setHiderInventory] = useState(() => {
+    const savedInv = localStorage.getItem("hiderInventory");
+    return savedInv ? JSON.parse(savedInv) : [];
+  });
+
   const [currentCard, setCurrentCard] = useState(null);
   const [pendingCard, setPendingCard] = useState(null);
   const [showCardDetail, setShowCardDetail] = useState(null);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
+
+  // Speichern in localStorage bei Änderungen
+  useEffect(() => {
+    if (team) {
+      localStorage.setItem("team", team);
+    } else {
+      localStorage.removeItem("team");
+    }
+  }, [team]);
+
+  useEffect(() => {
+    localStorage.setItem("deck", JSON.stringify(deck));
+  }, [deck]);
+
+  useEffect(() => {
+    localStorage.setItem("hiderInventory", JSON.stringify(hiderInventory));
+  }, [hiderInventory]);
 
   const drawCard = () => {
     if (deck.length === 0) {
@@ -178,6 +203,21 @@ export default function HideAndSeekApp() {
     setPendingCard(null);
   };
 
+  // Reset-Funktion
+  const resetGame = () => {
+    localStorage.removeItem("team");
+    localStorage.removeItem("deck");
+    localStorage.removeItem("hiderInventory");
+
+    setTeam(null);
+    setDeck(createDeck(cardsWithCount));
+    setHiderInventory([]);
+    setCurrentCard(null);
+    setPendingCard(null);
+    setShowCardDetail(null);
+    setConfirmDeleteIndex(null);
+  };
+
   if (!team) {
     return (
       <div className="max-w-md mx-auto p-4 text-center">
@@ -194,6 +234,12 @@ export default function HideAndSeekApp() {
         >
           Seeker
         </button>
+        <button
+          onClick={resetGame}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Spiel zurücksetzen
+        </button>
       </div>
     );
   }
@@ -203,12 +249,25 @@ export default function HideAndSeekApp() {
       <div className="max-w-md mx-auto p-4 text-center">
         <h1 className="text-xl font-bold mb-4">Du bist im Seeker-Team</h1>
         <p>Hier kommt später das Fragebogen-Feature rein.</p>
+        <button
+          onClick={resetGame}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Spiel zurücksetzen
+        </button>
       </div>
     );
   }
 
   return (
     <div className="max-w-md mx-auto p-4 text-center">
+      <button
+        onClick={resetGame}
+        className="mb-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        Spiel zurücksetzen
+      </button>
+
       <h1 className="text-xl font-bold mb-4">Hide & Seek – Karten ziehen</h1>
 
       <button
@@ -270,9 +329,7 @@ export default function HideAndSeekApp() {
               Inventar voll! Welche Karte möchtest du ersetzen?
             </h3>
             <p className="mb-2 font-semibold">Neue Karte:</p>
-            <div className="border p-4 mb-4 bg-gray-100 rounded">
-              {pendingCard}
-            </div>
+            <div className="border p-4 mb-4 bg-gray-100 rounded">{pendingCard}</div>
             <div className="flex flex-wrap justify-center gap-2 max-h-64 overflow-y-auto">
               {hiderInventory.map((card, idx) => (
                 <button
@@ -286,63 +343,56 @@ export default function HideAndSeekApp() {
             </div>
             <button
               onClick={() => setPendingCard(null)}
-              className="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              className="mt-4 px-4 py-2 bg-gray-400 rounded hover:bg-gray-600"
             >
-              Neue Karte verwerfen
+              Abbrechen
             </button>
           </div>
         </div>
       )}
 
-      {/* Info-Ansicht */}
-      {showCardDetail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-sm rounded-lg p-6 shadow-lg relative">
-            <button
-              onClick={() => setShowCardDetail(null)}
-              className="absolute top-2 right-2 text-gray-600 hover:text-black text-lg"
-            >
-              &times;
-            </button>
-            {(() => {
-              const info = getCardInfo(showCardDetail);
-              return (
-                <>
-                  <h2 className="text-xl font-bold mb-4 text-center">
-                    {info?.title}
-                  </h2>
-                  <p className="text-gray-800 text-sm mb-2 text-center">
-                    {info?.description}
-                  </p>
-                  <p className="text-gray-500 text-xs italic text-center">
-                    Beispiel: {info?.example}
-                  </p>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      )}
-
-      {/* Bestätigung zum Löschen */}
+      {/* Bestätigungsdialog für Karte löschen */}
       {confirmDeleteIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white p-6 rounded shadow text-center">
-            <p className="mb-4">Diese Karte wirklich löschen?</p>
-            <div className="flex justify-center gap-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
+            <p>Möchtest du diese Karte wirklich löschen?</p>
+            <div className="mt-4 flex justify-center gap-4">
               <button
                 onClick={confirmRemove}
-                className="px-4 py-2 bg-red-500 text-white rounded"
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
-                Löschen
+                Ja, löschen
               </button>
               <button
                 onClick={cancelRemove}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-600"
               >
                 Abbrechen
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Karten-Detailanzeige */}
+      {showCardDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded shadow max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">
+              {getCardInfo(showCardDetail)?.title}
+            </h2>
+            <p className="mb-2">
+              <strong>Beschreibung:</strong> {getCardInfo(showCardDetail)?.description}
+            </p>
+            <p>
+              <strong>Beispiel:</strong> {getCardInfo(showCardDetail)?.example}
+            </p>
+            <button
+              onClick={() => setShowCardDetail(null)}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+            >
+              Schließen
+            </button>
           </div>
         </div>
       )}
