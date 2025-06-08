@@ -28,7 +28,7 @@ const powerUpCards = [
   "Versteck-Wechsel-Karte: Alles wird 30 Minuten eingefroren. Du darfst dein Versteck wechseln. (Nur 1x im Spiel)",
 ];
 
-const drawRandom = (cards: string[]) => {
+const drawRandom = (cards) => {
   const index = Math.floor(Math.random() * cards.length);
   return cards[index];
 };
