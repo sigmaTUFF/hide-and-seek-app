@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // useEffect hinzugefügt
 
 // Kartendefinitionen mit Erklärung und Beispiel
 const cardsWithCount = [
@@ -123,27 +123,21 @@ function getCardInfo(cardText) {
 export default function HideAndSeekApp() {
   const [team, setTeam] = useState(null);
   const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
-  const [hiderInventory, setHiderInventory] = useState([]);
+  // Hier aus LocalStorage laden, falls vorhanden:
+  const [hiderInventory, setHiderInventory] = useState(() => {
+    const saved = localStorage.getItem("hiderInventory");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [currentCard, setCurrentCard] = useState(null);
   const [pendingCard, setPendingCard] = useState(null);
   const [showCardDetail, setShowCardDetail] = useState(null);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
-  import { useEffect } from "react"; // Falls noch nicht oben importiert
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-// Inventar aus LocalStorage laden
-useEffect(() => {
-  const savedInventory = localStorage.getItem("hiderInventory");
-  if (savedInventory) {
-    setHiderInventory(JSON.parse(savedInventory));
-  }
-}, []);
-
-// Inventar speichern, wenn es sich ändert
-useEffect(() => {
-  localStorage.setItem("hiderInventory", JSON.stringify(hiderInventory));
-}, [hiderInventory]);
-
-  const [showResetConfirm, setShowResetConfirm] = useState(false); // neu: Bestätigung sichtbar?
+  // Bei Änderungen im Inventar: Speichern ins LocalStorage
+  useEffect(() => {
+    localStorage.setItem("hiderInventory", JSON.stringify(hiderInventory));
+  }, [hiderInventory]);
 
   const drawCard = () => {
     if (deck.length === 0) {
@@ -194,25 +188,25 @@ useEffect(() => {
     setPendingCard(null);
   };
 
-  // Funktion für das Zurücksetzen mit Reset-Bestätigung
+  // Reset starten (zeigt Bestätigung)
   const resetGame = () => {
     setShowResetConfirm(true);
   };
 
-  // Wenn bestätigt: Reset ausführen
+  // Reset bestätigen und alles löschen inkl. localStorage
   const confirmReset = () => {
     setTeam(null);
     setDeck(createDeck(cardsWithCount));
     setHiderInventory([]);
-    localStorage.removeItem("hiderInventory");
     setCurrentCard(null);
     setPendingCard(null);
     setShowCardDetail(null);
     setConfirmDeleteIndex(null);
     setShowResetConfirm(false);
+
+    localStorage.removeItem("hiderInventory"); // LocalStorage löschen
   };
 
-  // Reset abbrechen
   const cancelReset = () => {
     setShowResetConfirm(false);
   };
@@ -309,21 +303,24 @@ useEffect(() => {
               Inventar voll! Welche Karte möchtest du ersetzen?
             </h3>
             <p className="mb-2 font-semibold">Neue Karte:</p>
-            <div className="border p-4 mb-4 bg-gray-100 rounded">{pendingCard}</div>
-            <div className="flex flex-wrap justify-center gap-2 max-h-64 overflow-y-auto">
+            <div className="mb-4 border p-2 rounded">{pendingCard}</div>
+            <div className="flex flex-wrap justify-center gap-2">
               {hiderInventory.map((card, idx) => (
                 <button
                   key={idx}
                   onClick={() => replaceCard(idx)}
-                  className="border p-2 rounded bg-blue-500 text-white hover:bg-blue-700 max-w-xs"
+                  className="border rounded p-2 bg-blue-500 text-white hover:bg-blue-600"
                 >
-                  {card}
+                  Ersetze Karte {idx + 1}: {card}
                 </button>
               ))}
             </div>
             <button
-              onClick={() => setPendingCard(null)}
-              className="mt-4 px-4 py-2 bg-gray-400 rounded hover:bg-gray-600"
+              onClick={() => {
+                setPendingCard(null);
+                setCurrentCard(null);
+              }}
+              className="mt-4 px-4 py-2 border rounded bg-gray-300 hover:bg-gray-400"
             >
               Abbrechen
             </button>
@@ -331,20 +328,24 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Karte Detailanzeige */}
+      {/* Kartendetails */}
       {showCardDetail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded shadow max-w-md w-full text-left">
-            <h3 className="text-xl font-bold mb-2">
-              {getCardInfo(showCardDetail)?.title || showCardDetail}
-            </h3>
-            <p className="mb-2">{getCardInfo(showCardDetail)?.description}</p>
-            <p className="italic text-gray-600 mb-4">
-              Beispiel: {getCardInfo(showCardDetail)?.example}
-            </p>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded shadow max-w-md w-full">
+            <h2 className="text-xl font-bold mb-2">{showCardDetail}</h2>
+            {(() => {
+              const info = getCardInfo(showCardDetail);
+              if (!info) return <p>Keine weiteren Informationen.</p>;
+              return (
+                <>
+                  <p className="mb-2">{info.description}</p>
+                  <p className="italic">Beispiel: {info.example}</p>
+                </>
+              );
+            })()}
             <button
               onClick={() => setShowCardDetail(null)}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+              className="mt-4 px-4 py-2 border rounded bg-gray-300 hover:bg-gray-400"
             >
               Schließen
             </button>
@@ -352,21 +353,25 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Löschen bestätigen */}
+      {/* Bestätigung Karte löschen */}
       {confirmDeleteIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
-            <p>Möchtest du diese Karte wirklich löschen?</p>
-            <div className="mt-4 flex justify-center gap-4">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
+            <p className="mb-4">
+              Willst du die Karte{" "}
+              <strong>{hiderInventory[confirmDeleteIndex]}</strong> wirklich
+              löschen?
+            </p>
+            <div className="flex justify-center gap-4">
               <button
                 onClick={confirmRemove}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
               >
                 Löschen
               </button>
               <button
                 onClick={cancelRemove}
-                className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-600"
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
               >
                 Abbrechen
               </button>
@@ -375,40 +380,41 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Reset-Bestätigung */}
+      {/* Reset Button */}
+      <div className="mt-auto pt-4 border-t mt-6">
+        <button
+          onClick={resetGame}
+          className="btn p-2 border rounded bg-red-600 text-white hover:bg-red-700"
+        >
+          Spiel zurücksetzen
+        </button>
+      </div>
+
+      {/* Reset bestätigen */}
       {showResetConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
-            <p className="mb-4 text-lg font-semibold">
-              Willst du wirklich das Spiel zurücksetzen? Alle Daten gehen verloren!
+            <p className="mb-4 font-semibold">
+              Willst du das Spiel wirklich zurücksetzen? Alle Daten gehen
+              verloren!
             </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={confirmReset}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-800"
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Ja, zurücksetzen
               </button>
               <button
                 onClick={cancelReset}
-                className="px-4 py-2 bg-gray-400 rounded hover:bg-gray-600"
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
               >
-                Nein, abbrechen
+                Abbrechen
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* RESET-BUTTON unten und abgetrennt */}
-      <div className="mt-auto pt-6 border-t border-gray-300">
-        <button
-          onClick={resetGame}
-          className="w-full py-3 bg-red-500 text-white rounded hover:bg-red-700 transition"
-        >
-          Spiel zurücksetzen
-        </button>
-      </div>
     </div>
   );
 }
