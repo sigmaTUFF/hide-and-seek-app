@@ -50,7 +50,7 @@ const cardsWithCount = [
     example: "Nach Aktivierung kannst du eine Karte mehr tragen.",
   },
     {
-    text: "4 Randomize Questions",
+    text: "Randomize Questions",
     count: 4,
     description:
       "Ersetzt die Sucherfrage durch eine zufällige Frage derselben Kategorie.",
