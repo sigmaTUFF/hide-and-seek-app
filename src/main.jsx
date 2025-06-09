@@ -1,10 +1,14 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import MainMenu from "./MainMenu";  // Hier importierst du deine Hauptkomponente
-import "./index.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import MainMenu from "./MainMenu";      // ← dein Hauptmenü
+import Hider from "./Hider";            // ← der Code von oben
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <MainMenu />  {/* Deine Hauptkomponente */}
-  </React.StrictMode>
-);
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<MainMenu />} />
+        <Route path="/hider" element={<Hider />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
