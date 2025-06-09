@@ -43,7 +43,7 @@ function getCardInfo(cardText) {
   };
 }
 
-export default function Hider() {
+export default function Hider({ onReset }) {
   const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
   const [hiderInventory, setHiderInventory] = useState(() => {
     const saved = localStorage.getItem("hiderInventory");
@@ -122,6 +122,8 @@ export default function Hider() {
     setShowResetConfirm(false);
 
     localStorage.removeItem("hiderInventory");
+
+    onRest();
   };
 
   const cancelReset = () => {
