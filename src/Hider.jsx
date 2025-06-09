@@ -3,25 +3,43 @@ import { useState, useEffect } from "react";
 // Kartendefinitionen unverändert (aus deinem Originalcode)
 const cardsWithCount = [
   {
+    text: "+3 Minuten Bonuszeit",
+    count: 25,
+    description:
+      "Nach dem Finden wird deine Versteckzeit um 3 Minuten verlängert – aber nur, wenn du diese Karte im Inventar hast.",
+    example: "Wenn du dich 60 Minuten versteckt hast, zählt es als 63 Minuten.",
+  },
+  {
     text: "+5 Minuten Bonuszeit",
-    count: 5,
-    description: "Du erhältst 5 Minuten extra Zeit, bevor die Sucher starten.",
-    example: "Start ist 15:00 – du darfst dich bis 15:05 verstecken.",
+    count: 15,
+    description:
+      "Diese Karte bringt dir 5 Minuten Bonuszeit, die zu deiner Versteckdauer hinzugezählt werden – nur gültig, wenn sie in deinem Inventar liegt.",
+    example: "1 Stunde versteckt + Karte = 1 Stunde und 5 Minuten gewertet.",
   },
   {
     text: "+10 Minuten Bonuszeit",
-    count: 4,
-    description: "Du bekommst 10 Minuten extra Versteckzeit.",
-    example: "Start ist 15:00 – du darfst dich bis 15:10 verstecken.",
+    count: 10,
+    description:
+      "Deine effektive Versteckzeit wird um 10 Minuten erhöht – sofern du diese Karte beim Finden im Inventar hast.",
+    example: "Wenn du 50 Minuten versteckt warst, werden 60 Minuten gezählt.",
   },
-  // ... der ganze restliche Array unverändert ...
   {
-    text: "Versteck-Wechsel-Karte",
+    text: "+15 Minuten Bonuszeit",
     count: 3,
-    description: "Du darfst dein Versteck einmal während des Spiels wechseln.",
-    example: "Nach 10 Minuten tauschst du dein Versteck.",
+    description:
+      "Diese seltene Karte schenkt dir 15 Minuten extra Versteckzeit nach dem Finden – nur wenn sie sich in deinem Inventar befindet.",
+    example: "45 Minuten Versteckzeit + 15 Minuten Bonus = 60 Minuten gewertet.",
+  },
+  {
+    text: "+20 Minuten Bonuszeit",
+    count: 2,
+    description:
+      "Die ultimative Bonuskarte: Sie gibt dir 20 Minuten Versteckzeit extra nach dem Finden – sofern im Inventar.",
+    example: "1:00h Versteckzeit + 20 Minuten Bonus = 1:20h gewertet.",
   },
 ];
+
+
 
 function createDeck(cardsWithCount) {
   const deck = [];
