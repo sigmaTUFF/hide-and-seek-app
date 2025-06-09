@@ -1,42 +1,53 @@
 import { useState, useEffect } from "react";
 
-// 📦 Kartenstapel mit neuen Bonuskarten + 2x Duplicate
+// Neue Kartendefinitionen
 const cardsWithCount = [
   {
-    text: "3 Minuten Bonuszeit",
+    text: "+3 Minuten Bonuszeit",
     count: 25,
     description:
-      "Wenn du gefunden wirst, werden dir 3 Minuten extra auf deine Versteckzeit angerechnet – aber nur, wenn du die Karte im Inventar hast.",
+      "Nachdem du gefunden wurdest, werden dir 3 Minuten extra zur Versteckzeit gutgeschrieben (wenn im Inventar).",
+    example: "Du wurdest nach 60 Minuten gefunden – mit Bonus zählt es wie 63 Minuten.",
   },
   {
-    text: "5 Minuten Bonuszeit",
+    text: "+5 Minuten Bonuszeit",
     count: 15,
     description:
-      "Wenn du gefunden wirst, bekommst du 5 Minuten extra auf deine Versteckzeit angerechnet – nur gültig, wenn sie im Inventar ist.",
+      "Bonuszeit nach dem Finden: 5 Minuten werden dir gutgeschrieben (nur bei Besitz).",
+    example: "Gefunden nach 60 Minuten, gewertet wird es wie 65 Minuten.",
   },
   {
-    text: "10 Minuten Bonuszeit",
+    text: "+10 Minuten Bonuszeit",
     count: 10,
     description:
-      "Diese Karte gibt dir 10 Minuten Bonuszeit zur eigentlichen Versteckzeit – vorausgesetzt, sie befindet sich im Inventar.",
+      "Wenn du gefunden wirst, zählt deine Zeit mit 10 Minuten Extra.",
+    example: "60 Minuten Versteckzeit → zählt als 70 Minuten.",
   },
   {
-    text: "15 Minuten Bonuszeit",
+    text: "+15 Minuten Bonuszeit",
     count: 3,
-    description:
-      "Diese Karte erhöht deine Versteckzeit nach dem Finden um 15 Minuten – nur gültig, wenn sie im Inventar liegt.",
+    description: "Erhöhe deine gewertete Versteckzeit um 15 Minuten.",
+    example: "Gefunden nach 50 Minuten → gewertet wie 65 Minuten.",
   },
   {
-    text: "20 Minuten Bonuszeit",
+    text: "+20 Minuten Bonuszeit",
     count: 2,
-    description:
-      "Du bekommst 20 Minuten Bonus auf deine Versteckzeit, wenn du diese Karte beim Finden im Inventar hast.",
+    description: "Erhöhe deine Versteckzeit-Wertung um 20 Minuten.",
+    example: "Gefunden nach 55 Minuten → zählt wie 75 Minuten.",
   },
   {
     text: "Duplicate-Karte",
     count: 2,
     description:
-      "Du darfst eine beliebige Karte aus deinem Inventar duplizieren. Die Duplicate-Karte wird dabei verbraucht.",
+      "Du darfst eine beliebige Karte aus deinem Inventar duplizieren (kopieren). Danach wird die Duplikat-Karte verbraucht.",
+    example: "Du hast +10 Minuten Bonus und nutzt Duplicate → bekommst sie ein zweites Mal.",
+  },
+  {
+    text: "Inventar-Erweiterung",
+    count: 3,
+    description:
+      "Erhöht dein Inventarlimit dauerhaft von 6 auf 7 (max. 10), wenn du sie benutzt.",
+    example: "Nach Aktivierung kannst du 7 Karten tragen.",
   },
 ];
 
@@ -56,6 +67,7 @@ function getCardInfo(cardText) {
   return {
     title: card.text,
     description: card.description || "Keine Beschreibung vorhanden.",
+    example: card.example || "Kein Beispiel vorhanden.",
   };
 }
 
@@ -65,16 +77,24 @@ export default function Hider() {
     const saved = localStorage.getItem("hiderInventory");
     return saved ? JSON.parse(saved) : [];
   });
+  const [maxInventorySize, setMaxInventorySize] = useState(() => {
+    const saved = localStorage.getItem("maxInventorySize");
+    return saved ? parseInt(saved, 10) : 6;
+  });
   const [currentCard, setCurrentCard] = useState(null);
   const [pendingCard, setPendingCard] = useState(null);
   const [showCardDetail, setShowCardDetail] = useState(null);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showDuplicatePicker, setShowDuplicatePicker] = useState(false);
+  const [showDuplicatePrompt, setShowDuplicatePrompt] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("hiderInventory", JSON.stringify(hiderInventory));
   }, [hiderInventory]);
+
+  useEffect(() => {
+    localStorage.setItem("maxInventorySize", maxInventorySize.toString());
+  }, [maxInventorySize]);
 
   const drawCard = () => {
     if (deck.length === 0) {
@@ -89,13 +109,7 @@ export default function Hider() {
     newDeck.splice(randomIndex, 1);
     setDeck(newDeck);
 
-    if (card === "Duplicate-Karte") {
-      setHiderInventory((prev) => [...prev, card]);
-      setCurrentCard(card);
-      return;
-    }
-
-    if (hiderInventory.length >= 6) {
+    if (hiderInventory.length >= maxInventorySize) {
       setPendingCard(card);
     } else {
       setHiderInventory((prev) => [...prev, card]);
@@ -108,32 +122,24 @@ export default function Hider() {
   };
 
   const confirmRemove = () => {
-    setHiderInventory((prev) =>
-      prev.filter((_, i) => i !== confirmDeleteIndex)
-    );
+    setHiderInventory((prev) => prev.filter((_, i) => i !== confirmDeleteIndex));
     setConfirmDeleteIndex(null);
   };
 
-  const cancelRemove = () => {
-    setConfirmDeleteIndex(null);
-  };
+  const cancelRemove = () => setConfirmDeleteIndex(null);
 
   const replaceCard = (index) => {
     if (!pendingCard) return;
-
     setHiderInventory((prev) => {
       const newInv = [...prev];
       newInv[index] = pendingCard;
       return newInv;
     });
-
     setCurrentCard(pendingCard);
     setPendingCard(null);
   };
 
-  const resetGame = () => {
-    setShowResetConfirm(true);
-  };
+  const resetGame = () => setShowResetConfirm(true);
 
   const confirmReset = () => {
     setDeck(createDeck(cardsWithCount));
@@ -143,11 +149,22 @@ export default function Hider() {
     setShowCardDetail(null);
     setConfirmDeleteIndex(null);
     setShowResetConfirm(false);
+    setMaxInventorySize(6);
     localStorage.removeItem("hiderInventory");
+    localStorage.removeItem("maxInventorySize");
   };
 
-  const cancelReset = () => {
-    setShowResetConfirm(false);
+  const cancelReset = () => setShowResetConfirm(false);
+
+  const duplicateCard = (card) => {
+    if (hiderInventory.length >= maxInventorySize) return;
+
+    const updated = [...hiderInventory];
+    updated.push(card);
+    const index = updated.indexOf("Duplicate-Karte");
+    if (index !== -1) updated.splice(index, 1);
+    setHiderInventory(updated);
+    setShowDuplicatePrompt(false);
   };
 
   return (
@@ -174,7 +191,9 @@ export default function Hider() {
       )}
 
       <div>
-        <h3 className="font-semibold mb-2">Dein Inventar (max. 6 Karten):</h3>
+        <h3 className="font-semibold mb-2">
+          Dein Inventar ({hiderInventory.length}/{maxInventorySize}):
+        </h3>
         {hiderInventory.length === 0 && <p>Keine Karten gezogen.</p>}
         <div className="flex flex-wrap justify-center gap-2">
           {hiderInventory.map((card, idx) => (
@@ -188,23 +207,42 @@ export default function Hider() {
                 <button
                   onClick={() => setShowCardDetail(card)}
                   className="px-2 py-0.5 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                  title="Details anzeigen"
                 >
                   i
                 </button>
+
                 {card === "Duplicate-Karte" && (
                   <button
-                    onClick={() => setShowDuplicatePicker(true)}
-                    className="px-2 py-0.5 bg-purple-500 text-white rounded hover:bg-purple-600"
+                    onClick={() => setShowDuplicatePrompt(true)}
+                    className="px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700"
                     title="Karte duplizieren"
                   >
                     ⧉
                   </button>
                 )}
+
+                {card === "Inventar-Erweiterung" && (
+                  <button
+                    onClick={() => {
+                      setHiderInventory((prev) => {
+                        const updated = [...prev];
+                        updated.splice(idx, 1);
+                        return updated;
+                      });
+                      setMaxInventorySize((prev) =>
+                        Math.min(prev + 1, 10)
+                      );
+                    }}
+                    className="px-2 py-0.5 bg-green-600 text-white rounded hover:bg-green-700"
+                    title="Inventar erweitern"
+                  >
+                    ⬆️
+                  </button>
+                )}
+
                 <button
                   onClick={() => removeCard(idx)}
                   className="px-2 py-0.5 bg-red-500 text-white rounded hover:bg-red-700"
-                  title="Karte löschen"
                 >
                   &times;
                 </button>
@@ -253,7 +291,12 @@ export default function Hider() {
             {(() => {
               const info = getCardInfo(showCardDetail);
               if (!info) return <p>Keine weiteren Informationen.</p>;
-              return <p>{info.description}</p>;
+              return (
+                <>
+                  <p className="mb-2">{info.description}</p>
+                  <p className="italic">Beispiel: {info.example}</p>
+                </>
+              );
             })()}
             <button
               onClick={() => setShowCardDetail(null)}
@@ -269,7 +312,7 @@ export default function Hider() {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
             <p className="mb-4">
-              Willst du die Karte{" "}
+              Karte{" "}
               <strong>{hiderInventory[confirmDeleteIndex]}</strong> wirklich
               löschen?
             </p>
@@ -291,38 +334,27 @@ export default function Hider() {
         </div>
       )}
 
-      {showDuplicatePicker && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      {showDuplicatePrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
             <h3 className="text-lg font-bold mb-4">
               Welche Karte möchtest du duplizieren?
             </h3>
-            <div className="flex flex-wrap justify-center gap-2 max-h-60 overflow-y-auto">
+            <div className="flex flex-wrap justify-center gap-2">
               {hiderInventory
-                .map((card, idx) => ({ card, idx }))
-                .filter(({ card }) => card !== "Duplicate-Karte")
-                .map(({ card, idx }) => (
+                .filter((card) => card !== "Duplicate-Karte")
+                .map((card, idx) => (
                   <button
                     key={idx}
-                    onClick={() => {
-                      setHiderInventory((prev) => {
-                        const updated = [...prev];
-                        updated.push(card);
-                        const dupIndex = updated.indexOf("Duplicate-Karte");
-                        if (dupIndex !== -1) updated.splice(dupIndex, 1);
-                        return updated;
-                      });
-                      setShowDuplicatePicker(false);
-                      setCurrentCard(`Dupliziert: ${card}`);
-                    }}
-                    className="border rounded p-2 bg-purple-500 text-white hover:bg-purple-600"
+                    onClick={() => duplicateCard(card)}
+                    className="border rounded p-2 bg-blue-500 text-white hover:bg-blue-600"
                   >
                     {card}
                   </button>
                 ))}
             </div>
             <button
-              onClick={() => setShowDuplicatePicker(false)}
+              onClick={() => setShowDuplicatePrompt(false)}
               className="mt-4 px-4 py-2 border rounded bg-gray-300 hover:bg-gray-400"
             >
               Abbrechen
