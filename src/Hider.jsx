@@ -156,16 +156,31 @@ export default function Hider() {
 
   const cancelReset = () => setShowResetConfirm(false);
 
-  const duplicateCard = (card) => {
-    if (hiderInventory.length >= maxInventorySize) return;
+const duplicateCard = (card) => {
+  const indexOfDuplicate = hiderInventory.indexOf("Duplicate-Karte");
 
-    const updated = [...hiderInventory];
-    updated.push(card);
-    const index = updated.indexOf("Duplicate-Karte");
-    if (index !== -1) updated.splice(index, 1);
-    setHiderInventory(updated);
+  // Prüfen ob Platz für Duplikat ist (nachdem die Duplicate-Karte entfernt würde)
+  const spaceAvailable =
+    hiderInventory.length - 1 < maxInventorySize && indexOfDuplicate !== -1;
+
+  if (!spaceAvailable) {
+    alert("Nicht genug Platz im Inventar, um zu duplizieren!");
     setShowDuplicatePrompt(false);
-  };
+    return;
+  }
+
+  setHiderInventory((prev) => {
+    const updated = [...prev];
+    // Entferne Duplicate-Karte
+    updated.splice(indexOfDuplicate, 1);
+    // Füge Kopie der gewünschten Karte hinzu
+    updated.push(card);
+    return updated;
+  });
+
+  setShowDuplicatePrompt(false);
+};
+
 
   return (
     <div className="max-w-md mx-auto p-4 text-center flex flex-col min-h-screen">
