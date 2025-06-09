@@ -1,54 +1,14 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // NEU
 
-// Neue Kartendefinitionen
 const cardsWithCount = [
-  {
-    text: "+3 Minuten Bonuszeit",
-    count: 25,
-    description:
-      "Nachdem du gefunden wurdest, werden dir 3 Minuten extra zur Versteckzeit gutgeschrieben (wenn im Inventar).",
-    example: "Du wurdest nach 60 Minuten gefunden – mit Bonus zählt es wie 63 Minuten.",
-  },
-  {
-    text: "+5 Minuten Bonuszeit",
-    count: 15,
-    description:
-      "Bonuszeit nach dem Finden: 5 Minuten werden dir gutgeschrieben (nur bei Besitz).",
-    example: "Gefunden nach 60 Minuten, gewertet wird es wie 65 Minuten.",
-  },
-  {
-    text: "+10 Minuten Bonuszeit",
-    count: 10,
-    description:
-      "Wenn du gefunden wirst, zählt deine Zeit mit 10 Minuten Extra.",
-    example: "60 Minuten Versteckzeit → zählt als 70 Minuten.",
-  },
-  {
-    text: "+15 Minuten Bonuszeit",
-    count: 3,
-    description: "Erhöhe deine gewertete Versteckzeit um 15 Minuten.",
-    example: "Gefunden nach 50 Minuten → gewertet wie 65 Minuten.",
-  },
-  {
-    text: "+20 Minuten Bonuszeit",
-    count: 2,
-    description: "Erhöhe deine Versteckzeit-Wertung um 20 Minuten.",
-    example: "Gefunden nach 55 Minuten → zählt wie 75 Minuten.",
-  },
-  {
-    text: "Duplicate-Karte",
-    count: 2,
-    description:
-      "Du darfst eine beliebige Karte aus deinem Inventar duplizieren (kopieren). Danach wird die Duplikat-Karte verbraucht.",
-    example: "Du hast +10 Minuten Bonus und nutzt Duplicate → bekommst sie ein zweites Mal.",
-  },
-  {
-    text: "Inventar-Erweiterung",
-    count: 3,
-    description:
-      "Erhöht dein Inventarlimit dauerhaft von 6 auf 7 (max. 10), wenn du sie benutzt.",
-    example: "Nach Aktivierung kannst du 7 Karten tragen.",
-  },
+  { text: "+3 Minuten Bonuszeit", count: 25, description: "Nachdem du gefunden wurdest, werden dir 3 Minuten extra zur Versteckzeit gutgeschrieben (wenn im Inventar).", example: "Gefunden nach 60 Minuten → zählt wie 63 Minuten." },
+  { text: "+5 Minuten Bonuszeit", count: 15, description: "Bonuszeit nach dem Finden: 5 Minuten werden dir gutgeschrieben (nur bei Besitz).", example: "60 Minuten → zählt wie 65 Minuten." },
+  { text: "+10 Minuten Bonuszeit", count: 10, description: "Wenn du gefunden wirst, zählt deine Zeit mit 10 Minuten Extra.", example: "60 Minuten → zählt wie 70 Minuten." },
+  { text: "+15 Minuten Bonuszeit", count: 3, description: "Erhöhe deine gewertete Versteckzeit um 15 Minuten.", example: "Gefunden nach 50 Minuten → zählt wie 65 Minuten." },
+  { text: "+20 Minuten Bonuszeit", count: 2, description: "Erhöhe deine Versteckzeit-Wertung um 20 Minuten.", example: "Gefunden nach 55 Minuten → zählt wie 75 Minuten." },
+  { text: "Duplicate-Karte", count: 2, description: "Du darfst eine beliebige Karte aus deinem Inventar duplizieren (kopieren). Danach wird die Duplikat-Karte verbraucht.", example: "Du hast +10 Minuten Bonus und nutzt Duplicate → bekommst sie ein zweites Mal." },
+  { text: "Inventar-Erweiterung", count: 3, description: "Erhöht dein Inventarlimit dauerhaft von 6 auf 7 (max. 10), wenn du sie benutzt.", example: "Nach Aktivierung kannst du 7 Karten tragen." },
 ];
 
 function createDeck(cardsWithCount) {
@@ -72,6 +32,7 @@ function getCardInfo(cardText) {
 }
 
 export default function Hider() {
+  const navigate = useNavigate(); // NEU
   const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
   const [hiderInventory, setHiderInventory] = useState(() => {
     const saved = localStorage.getItem("hiderInventory");
@@ -117,15 +78,11 @@ export default function Hider() {
     }
   };
 
-  const removeCard = (index) => {
-    setConfirmDeleteIndex(index);
-  };
-
+  const removeCard = (index) => setConfirmDeleteIndex(index);
   const confirmRemove = () => {
     setHiderInventory((prev) => prev.filter((_, i) => i !== confirmDeleteIndex));
     setConfirmDeleteIndex(null);
   };
-
   const cancelRemove = () => setConfirmDeleteIndex(null);
 
   const replaceCard = (index) => {
@@ -152,17 +109,25 @@ export default function Hider() {
     setMaxInventorySize(6);
     localStorage.removeItem("hiderInventory");
     localStorage.removeItem("maxInventorySize");
+    navigate("/"); // ← LEITET NACH RESET ZUM HAUPTMENÜ
   };
 
   const cancelReset = () => setShowResetConfirm(false);
 
-  const duplicateCard = (card) => {
-    if (hiderInventory.length >= maxInventorySize) return;
-
+  const duplicateCard = (cardToDuplicate) => {
     const updated = [...hiderInventory];
-    updated.push(card);
-    const index = updated.indexOf("Duplicate-Karte");
-    if (index !== -1) updated.splice(index, 1);
+    const duplicateIndex = updated.indexOf("Duplicate-Karte");
+
+    if (duplicateIndex === -1) return;
+
+    // Karte hinzufügen oder ersetzen:
+    if (updated.length < maxInventorySize) {
+      updated.push(cardToDuplicate);
+    } else {
+      // Wenn voll, ersetze Duplicate selbst
+      updated[duplicateIndex] = cardToDuplicate;
+    }
+
     setHiderInventory(updated);
     setShowDuplicatePrompt(false);
   };
