@@ -1,13 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Hider from "./Hider";
 import Seeker from "./Seeker";
 
 export default function MainMenu() {
   const [team, setTeam] = useState(null);
-
-  const resetToMenu = () => {
-    setTeam(null);
-  };
 
   if (!team) {
     return (
@@ -30,12 +26,8 @@ export default function MainMenu() {
   }
 
   if (team === "hider") {
-    return <Hider onReset={resetToMenu} />;
+    return <Hider />;
   }
 
-  if (team === "seeker") {
-    return <Seeker />;
-  }
-
-  return null;
+  return <Seeker />;
 }
