@@ -1,47 +1,5 @@
-import { useState, useEffect } from "react";
-
-// Kartendefinitionen unverändert (aus deinem Originalcode)
-const cardsWithCount = [
-  {
-    text: "+5 Minuten Bonuszeit",
-    count: 5,
-    description: "Du erhältst 5 Minuten extra Zeit, bevor die Sucher starten.",
-    example: "Start ist 15:00 – du darfst dich bis 15:05 verstecken.",
-  },
-  {
-    text: "+10 Minuten Bonuszeit",
-    count: 4,
-    description: "Du bekommst 10 Minuten extra Versteckzeit.",
-    example: "Start ist 15:00 – du darfst dich bis 15:10 verstecken.",
-  },
-  // ... der ganze restliche Array unverändert ...
-  {
-    text: "Versteck-Wechsel-Karte",
-    count: 3,
-    description: "Du darfst dein Versteck einmal während des Spiels wechseln.",
-    example: "Nach 10 Minuten tauschst du dein Versteck.",
-  },
-];
-
-function createDeck(cardsWithCount) {
-  const deck = [];
-  cardsWithCount.forEach(({ text, count }) => {
-    for (let i = 0; i < count; i++) {
-      deck.push(text);
-    }
-  });
-  return deck;
-}
-
-function getCardInfo(cardText) {
-  const card = cardsWithCount.find((c) => c.text === cardText);
-  if (!card) return null;
-  return {
-    title: card.text,
-    description: card.description || "Keine Beschreibung vorhanden.",
-    example: card.example || "Kein Beispiel vorhanden.",
-  };
-}
+import React, { useState, useEffect } from "react";
+import { cardsWithCount, createDeck, getCardInfo } from "./cards";
 
 export default function Hider({ onReset }) {
   const [deck, setDeck] = useState(() => createDeck(cardsWithCount));
@@ -123,7 +81,10 @@ export default function Hider({ onReset }) {
 
     localStorage.removeItem("hiderInventory");
 
-    onRest();
+    // Zurück zum Hauptmenü springen
+    if (onReset) {
+      onReset();
+    }
   };
 
   const cancelReset = () => {
@@ -245,8 +206,7 @@ export default function Hider({ onReset }) {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
             <p className="mb-4">
-              Willst du die Karte{" "}
-              <strong>{hiderInventory[confirmDeleteIndex]}</strong> wirklich
+              Willst du die Karte <strong>{hiderInventory[confirmDeleteIndex]}</strong> wirklich
               löschen?
             </p>
             <div className="flex justify-center gap-4">
@@ -280,8 +240,7 @@ export default function Hider({ onReset }) {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded shadow max-w-sm w-full text-center">
             <p className="mb-4 font-semibold">
-              Willst du das Spiel wirklich zurücksetzen? Alle Daten gehen
-              verloren!
+              Willst du das Spiel wirklich zurücksetzen? Alle Daten gehen verloren!
             </p>
             <div className="flex justify-center gap-4">
               <button
