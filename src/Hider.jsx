@@ -44,11 +44,37 @@ const cardsWithCount = [
   },
   {
     text: "Inventar-Erweiterung",
-    count: 3,
+    count: 2,
     description:
-      "Erhöht dein Inventarlimit dauerhaft von 6 auf 7 (max. 10), wenn du sie benutzt.",
-    example: "Nach Aktivierung kannst du 7 Karten tragen.",
+      "Erhöht dein Inventarlimit dauerhaft um 1 Slot, wenn du sie benutzt.",
+    example: "Nach Aktivierung kannst du eine Karte mehr tragen.",
   },
+    {
+    text: "4 Randomize Questions",
+    count: 4,
+    description:
+      "Ersetzt die Sucherfrage durch eine zufällige Frage derselben Kategorie.",
+    example:
+      "Die Sucher fragen: 'Wie spät ist es?' → wird durch eine andere zufällige Frage aus der Kategorie ersetzt.",
+  },
+  {
+    text: "Veto Karte",
+    count: 4,
+    description:
+      "Blockiert komplett eine Frage der Sucher und ignoriert sie.",
+    example:
+      "Die Sucher stellen eine Frage → mit Veto-Karte wird diese komplett ignoriert.",
+  },
+  {
+  text: "Move Karte",
+  count: 1,
+  description:
+    "Ermöglicht dir, dein Versteck zu wechseln, solange die Sucher nicht näher als 500m sind. Die Sucher sind zudem für die nächsten 30 Minuten eingeforere, jedoch sehen die deinen jetzigen Standort",
+  example:
+    "Du wechselst das Versteck innerhalb von 30 Minuten, Jedoch sehen die Sucher sehen deinen alten Standort",
+},
+
+
 ];
 
 function createDeck(cardsWithCount) {
