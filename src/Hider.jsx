@@ -79,7 +79,7 @@ const cardsWithCount = [
   description:
     "Ermöglicht dir, eine Karte aus deinem Inventar sowie diese Karte zu löschen und dafür zwei neue Karten zu ziehen.",
   example:
-    "Du löscht eine Karte plus Recyclingh und erhältst dafür zwei frische Karten.",
+    "Du löscht eine Karte plus Recycling und erhältst dafür zwei frische Karten.",
 },
 {
   text: "Recycling 2.0",
