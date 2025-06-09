@@ -73,6 +73,23 @@ const cardsWithCount = [
   example:
     "Du wechselst das Versteck innerhalb von 30 Minuten, Jedoch sehen die Sucher sehen deinen alten Standort",
 },
+  {
+  text: "Recyclingh",
+  count: 4,
+  description:
+    "Ermöglicht dir, eine Karte aus deinem Inventar sowie diese Karte zu löschen und dafür zwei neue Karten zu ziehen.",
+  example:
+    "Du löscht eine Karte plus Recyclingh und erhältst dafür zwei frische Karten.",
+},
+{
+  text: "Recycling 2.0",
+  count: 4,
+  description:
+    "Lösche zwei Karten aus deinem Inventar sowie diese Karte, um drei neue Karten zu ziehen.",
+  example:
+    "Du gibst zwei Karten plus Recycling 2.0 ab und bekommst drei neue Karten ins Inventar.",
+},
+
 
 
 ];
