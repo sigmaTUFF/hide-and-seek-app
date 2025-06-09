@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Hider from "./Hider";
 import Seeker from "./Seeker";
 
@@ -10,14 +10,14 @@ export default function MainMenu() {
       <div className="max-w-md mx-auto p-4 text-center">
         <h1 className="text-xl font-bold mb-4">Wähle dein Team</h1>
         <button
-          className="btn m-2 p-2 border rounded bg-blue-500 text-white"
           onClick={() => setTeam("hider")}
+          className="btn m-2 p-2 border rounded bg-blue-500 text-white"
         >
           Hider
         </button>
         <button
-          className="btn m-2 p-2 border rounded bg-green-500 text-white"
           onClick={() => setTeam("seeker")}
+          className="btn m-2 p-2 border rounded bg-green-500 text-white"
         >
           Seeker
         </button>
@@ -26,8 +26,12 @@ export default function MainMenu() {
   }
 
   if (team === "hider") {
-    return <Hider />;
+    // Übergibt die Funktion setTeam(null) als onReset an Hider
+    return <Hider onReset={() => setTeam(null)} />;
   }
 
-  return <Seeker />;
+  if (team === "seeker") {
+    // Hier kannst du Seeker auch mit onReset versorgen (optional)
+    return <Seeker onReset={() => setTeam(null)} />;
+  }
 }
