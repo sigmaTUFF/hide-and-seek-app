@@ -20,40 +20,38 @@ const compareOptions = [
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche
   const [usedCompareOptions, setUsedCompareOptions] = useState(() => {
-    // Aus localStorage laden, falls vorhanden
     const saved = localStorage.getItem("usedCompareOptions");
     return saved ? JSON.parse(saved) : [];
   });
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
-  const [previewOption, setPreviewOption] = useState(null); // Vorschau Option
+  const [previewOption, setPreviewOption] = useState(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Speichern in localStorage wenn sich usedCompareOptions ändert
   useEffect(() => {
     localStorage.setItem("usedCompareOptions", JSON.stringify(usedCompareOptions));
   }, [usedCompareOptions]);
 
-  // Funktion um Vergleichsfrage-Vorschau zu zeigen
   const previewCompareOption = (option) => {
     setPreviewOption(
       `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
     );
   };
 
-  // Funktion um Vergleichsfrage zu verwenden (final bestätigen)
   const useCompareOption = (option) => {
-    setSelectedCompareCard(previewOption);
+    setSelectedCompareCard(
+      `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
+    );
     setUsedCompareOptions((prev) => [...prev, option]);
     setPreviewOption(null);
   };
 
-  // Hilfsfunktion ob Button deaktiviert sein soll
   const isOptionUsed = (option) => usedCompareOptions.includes(option);
 
-  // Reset Funktion
   const resetUsed = () => {
     setUsedCompareOptions([]);
     setSelectedCompareCard(null);
     setPreviewOption(null);
+    setShowResetConfirm(false);
   };
 
   return (
@@ -75,12 +73,35 @@ export default function Seeker() {
           >
             Notizen (bald)
           </button>
-          <button
-            onClick={resetUsed}
-            className="btn p-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Reset (alle genutzten Fragen zurücksetzen)
-          </button>
+
+          {!showResetConfirm && (
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="btn p-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Reset (alle genutzten Fragen zurücksetzen)
+            </button>
+          )}
+
+          {showResetConfirm && (
+            <div className="mt-4 p-4 border rounded bg-yellow-100">
+              <p className="mb-2 font-semibold">
+                Möchtest du wirklich alle genutzten Fragen zurücksetzen?
+              </p>
+              <button
+                onClick={resetUsed}
+                className="btn p-2 mr-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Ja, zurücksetzen
+              </button>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="btn p-2 bg-gray-400 text-black rounded hover:bg-gray-500"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
         </>
       )}
 
