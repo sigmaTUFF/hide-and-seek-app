@@ -24,7 +24,7 @@ export default function Seeker() {
     return saved ? JSON.parse(saved) : [];
   });
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
-  const [previewOption, setPreviewOption] = useState(null);
+  const [previewOption, setPreviewOption] = useState(null); // wird jetzt Objekt sein: { option, text }
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
@@ -32,12 +32,13 @@ export default function Seeker() {
   }, [usedCompareOptions]);
 
   const previewCompareOption = (option) => {
-    setPreviewOption(
-      `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
-    );
+    setPreviewOption({
+      option,
+      text: `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`,
+    });
   };
 
-  const useCompareOption = (option) => {
+  const useCompareOption = ({ option }) => {
     setSelectedCompareCard(
       `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
     );
@@ -204,10 +205,10 @@ export default function Seeker() {
             <div className="mb-4">
               <p className="mb-2 font-semibold">Vorschau:</p>
               <div className="border rounded p-4 bg-yellow-100 text-lg font-bold max-w-xl mx-auto">
-                {previewOption}
+                {previewOption.text}
               </div>
               <button
-                onClick={() => useCompareOption(previewOption.split(" ")[2].toLowerCase())}
+                onClick={() => useCompareOption(previewOption)}
                 className="btn p-2 mt-2 bg-green-600 text-white rounded hover:bg-green-700"
               >
                 Frage verwenden
