@@ -19,7 +19,7 @@ const compareOptions = [
 
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche
-  const [usedQuestions, setUsedQuestions] = useState([]); // zentrale Speicherung aller genutzten Fragen
+  const [usedCompareOptions, setUsedCompareOptions] = useState([]);
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
 
   // Funktion um Vergleichsfrage-Button zu verwenden
@@ -27,38 +27,28 @@ export default function Seeker() {
     setSelectedCompareCard(
       `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
     );
-    setUsedQuestions((prev) => {
-      if (!prev.includes(option)) {
-        return [...prev, option];
-      }
-      return prev;
-    });
+    setUsedCompareOptions((prev) => [...prev, option]);
   };
 
   // Hilfsfunktion ob Button deaktiviert sein soll
-  const isOptionUsed = (option) => usedQuestions.includes(option);
-
-  // Reset Funktion, die alle gespeicherten genutzten Fragen löscht
-  const resetUsedQuestions = () => {
-    setUsedQuestions([]);
-    setSelectedCompareCard(null);
-    alert("Alle gespeicherten Fragen wurden zurückgesetzt.");
-  };
+  const isOptionUsed = (option) => usedCompareOptions.includes(option);
 
   return (
     <div className="max-w-md mx-auto p-4 text-center min-h-screen flex flex-col">
       {view === "menu" && (
         <>
-          <h1 className="text-3xl font-bold mb-6">Seeker Hauptmenü</h1>
+          <h1 className="text-2xl font-bold mb-6">Seeker Hauptmenü</h1>
           <button
             onClick={() => setView("fragen")}
-            className="mb-4 w-full rounded bg-blue-600 px-4 py-3 text-white hover:bg-blue-700"
+            className="btn p-2 mb-4 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Fragen
           </button>
           <button
             onClick={() => setView("notizen")}
-            className="mb-4 w-full rounded bg-gray-600 px-4 py-3 text-white hover:bg-gray-700"
+            className="btn p-2 bg-gray-400 text-white rounded cursor-not-allowed"
+            disabled
+            title="Notizen werden aktuell nicht unterstützt"
           >
             Notizen (bald)
           </button>
@@ -69,57 +59,56 @@ export default function Seeker() {
         <>
           <button
             onClick={() => setView("menu")}
-            className="mb-6 self-start rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
+            className="btn p-2 mb-6 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
             &larr; Zurück zur Auswahl
           </button>
 
-          <h2 className="mb-4 text-xl font-semibold">Fragen-Kategorien</h2>
+          <h2 className="text-xl font-semibold mb-4">Fragen-Kategorien</h2>
 
           <button
             onClick={() => setView("vergleiche")}
-            className="mb-2 w-full rounded bg-green-600 px-4 py-3 text-white hover:bg-green-700"
+            className="btn p-3 mb-2 w-full bg-green-600 text-white rounded hover:bg-green-700"
           >
             Vergleiche
           </button>
 
-          {/* Weitere Kategorien vorerst deaktiviert */}
           <button
             onClick={() => alert("Noch nicht implementiert")}
+            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
             disabled
-            className="mb-2 w-full cursor-not-allowed rounded bg-gray-400 px-4 py-3 text-white opacity-70"
           >
             Präzisionsfrage
           </button>
 
           <button
             onClick={() => alert("Noch nicht implementiert")}
+            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
             disabled
-            className="mb-2 w-full cursor-not-allowed rounded bg-gray-400 px-4 py-3 text-white opacity-70"
           >
             Fotos
           </button>
 
           <button
             onClick={() => alert("Noch nicht implementiert")}
+            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
             disabled
-            className="mb-2 w-full cursor-not-allowed rounded bg-gray-400 px-4 py-3 text-white opacity-70"
           >
             Maße
           </button>
 
           <button
             onClick={() => alert("Noch nicht implementiert")}
+            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
             disabled
-            className="mb-2 w-full cursor-not-allowed rounded bg-gray-400 px-4 py-3 text-white opacity-70"
           >
             Thermometer
           </button>
 
           <button
             onClick={() => alert("Noch nicht implementiert")}
+            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
             disabled
-            className="mb-2 w-full cursor-not-allowed rounded bg-gray-400 px-4 py-3 text-white opacity-70"
           >
             Radar
           </button>
@@ -132,30 +121,26 @@ export default function Seeker() {
             onClick={() => {
               setView("fragen");
               setSelectedCompareCard(null);
+              setUsedCompareOptions([]);
             }}
-            className="mb-4 self-start rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
+            className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
             &larr; Zurück zu Fragen
           </button>
 
-          <h2 className="mb-2 text-xl font-semibold">Vergleiche</h2>
-          <p className="mb-1 font-semibold">
-            Preis: Der Verstecker darf 2 Karten ziehen
-          </p>
-          <p className="mb-6 italic">
-            Beispiel: Ist dein nächster ___ derselbe wie mein nächster ___?
-          </p>
+          <h2 className="text-xl font-semibold mb-2">Vergleiche</h2>
+          <p className="mb-1 font-semibold">Preis: Der Verstecker darf 2 Karten ziehen</p>
+          <p className="mb-4 italic">Beispiel: Ist dein nächster ___ derselbe wie mein nächster ___?</p>
 
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-2 mb-4">
             {compareOptions.map((option) => (
               <button
                 key={option}
                 onClick={() => useCompareOption(option)}
                 disabled={isOptionUsed(option)}
-                className={`rounded border px-3 py-2 text-center text-sm font-medium
-                ${
+                className={`p-2 rounded border ${
                   isOptionUsed(option)
-                    ? "cursor-not-allowed bg-gray-300 text-gray-500"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-blue-500 text-white hover:bg-blue-600"
                 }`}
               >
@@ -165,7 +150,7 @@ export default function Seeker() {
           </div>
 
           {selectedCompareCard && (
-            <div className="mx-auto max-w-xl rounded border bg-white p-4 text-lg font-bold shadow">
+            <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
               {selectedCompareCard}
             </div>
           )}
@@ -173,27 +158,15 @@ export default function Seeker() {
       )}
 
       {view === "notizen" && (
-        <>
+        <div>
           <button
             onClick={() => setView("menu")}
-            className="mb-6 self-start rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
+            className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
             &larr; Zurück zur Auswahl
           </button>
-
-          <h2 className="mb-4 text-xl font-semibold">Notizen</h2>
-          <p className="mb-6 italic text-gray-600">
-            Notizen werden noch implementiert.
-          </p>
-
-          {/* Reset Button nur hier */}
-          <button
-            onClick={resetUsedQuestions}
-            className="rounded bg-red-600 px-6 py-3 text-white hover:bg-red-700"
-          >
-            Alle gespeicherten Fragen zurücksetzen
-          </button>
-        </>
+          <p>Notizen werden noch implementiert.</p>
+        </div>
       )}
     </div>
   );
