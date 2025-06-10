@@ -17,52 +17,41 @@ const compareOptions = [
   "See",
 ];
 
-const STORAGE_KEY = "seeker-used-compare-options";
-
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche
-  const [usedCompareOptions, setUsedCompareOptions] = useState([]);
+  const [usedCompareOptions, setUsedCompareOptions] = useState(() => {
+    // Lade gespeicherte Optionen aus localStorage beim Start
+    const saved = localStorage.getItem("usedCompareOptions");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
 
-  // Beim Mounten laden aus localStorage
+  // Speichere usedCompareOptions bei jeder Änderung im localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed.usedCompareOptions)) {
-          setUsedCompareOptions(parsed.usedCompareOptions);
-        }
-        if (typeof parsed.selectedCompareCard === "string") {
-          setSelectedCompareCard(parsed.selectedCompareCard);
-        }
-      }
-    } catch (e) {
-      console.error("Fehler beim Laden der gespeicherten Daten", e);
-    }
-  }, []);
+    localStorage.setItem("usedCompareOptions", JSON.stringify(usedCompareOptions));
+  }, [usedCompareOptions]);
 
-  // Bei Änderung speichern
-  useEffect(() => {
-    const data = {
-      usedCompareOptions,
-      selectedCompareCard,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [usedCompareOptions, selectedCompareCard]);
-
+  // Funktion um Vergleichsfrage-Button zu verwenden mit Bestätigung
   const useCompareOption = (option) => {
-    const newCard = `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`;
-    setSelectedCompareCard(newCard);
-    setUsedCompareOptions((prev) => [...prev, option]);
+    if (window.confirm(`Willst du die Frage mit "${option}" wirklich verwenden?`)) {
+      setSelectedCompareCard(
+        `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
+      );
+      setUsedCompareOptions((prev) => [...prev, option]);
+    }
   };
 
+  // Hilfsfunktion ob Button deaktiviert sein soll
   const isOptionUsed = (option) => usedCompareOptions.includes(option);
 
-  const resetUsedOptions = () => {
-    setUsedCompareOptions([]);
-    setSelectedCompareCard(null);
-    localStorage.removeItem(STORAGE_KEY);
+  // Reset-Funktion: Löscht alle gespeicherten Daten und setzt States zurück
+  const resetAll = () => {
+    if (window.confirm("Willst du wirklich alle gespeicherten Daten zurücksetzen?")) {
+      localStorage.removeItem("usedCompareOptions");
+      setUsedCompareOptions([]);
+      setSelectedCompareCard(null);
+      setView("menu");
+    }
   };
 
   return (
@@ -78,7 +67,7 @@ export default function Seeker() {
           </button>
           <button
             onClick={() => setView("notizen")}
-            className="btn p-2 mb-4 bg-gray-600 text-white rounded hover:bg-gray-700"
+            className="btn p-2 mb-4 bg-gray-400 text-white rounded"
           >
             Notizen
           </button>
@@ -151,7 +140,7 @@ export default function Seeker() {
             onClick={() => {
               setView("fragen");
               setSelectedCompareCard(null);
-              // NICHT usedCompareOptions resetten, soll persistent bleiben
+              // setUsedCompareOptions([]); // nicht zurücksetzen hier, wird nur beim Reset gemacht
             }}
             className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
@@ -196,14 +185,11 @@ export default function Seeker() {
             &larr; Zurück zur Auswahl
           </button>
           <p>Notizen werden noch implementiert.</p>
-
-          {/* RESET BUTTON */}
           <button
-            onClick={resetUsedOptions}
-            className="btn p-2 mt-6 bg-red-600 text-white rounded hover:bg-red-700"
-            title="Alle benutzten Fragen zurücksetzen"
+            onClick={resetAll}
+            className="btn p-2 mt-4 bg-red-600 text-white rounded hover:bg-red-700"
           >
-            Reset alle benutzten Fragen
+            Reset alle gespeicherten Fragen
           </button>
         </div>
       )}
