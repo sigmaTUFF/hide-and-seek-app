@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const compareOptions = [
   "Spielplatz",
@@ -17,26 +17,52 @@ const compareOptions = [
   "See",
 ];
 
+const STORAGE_KEY = "seeker-used-compare-options";
+
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche
   const [usedCompareOptions, setUsedCompareOptions] = useState([]);
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
 
-  // Funktion um Vergleichsfrage-Button zu verwenden
+  // Beim Mounten laden aus localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed.usedCompareOptions)) {
+          setUsedCompareOptions(parsed.usedCompareOptions);
+        }
+        if (typeof parsed.selectedCompareCard === "string") {
+          setSelectedCompareCard(parsed.selectedCompareCard);
+        }
+      }
+    } catch (e) {
+      console.error("Fehler beim Laden der gespeicherten Daten", e);
+    }
+  }, []);
+
+  // Bei Änderung speichern
+  useEffect(() => {
+    const data = {
+      usedCompareOptions,
+      selectedCompareCard,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }, [usedCompareOptions, selectedCompareCard]);
+
   const useCompareOption = (option) => {
-    setSelectedCompareCard(
-      `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
-    );
+    const newCard = `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`;
+    setSelectedCompareCard(newCard);
     setUsedCompareOptions((prev) => [...prev, option]);
   };
 
-  // Hilfsfunktion ob Button deaktiviert sein soll
   const isOptionUsed = (option) => usedCompareOptions.includes(option);
 
-  // Reset-Funktion für benutzte Optionen
   const resetUsedOptions = () => {
     setUsedCompareOptions([]);
     setSelectedCompareCard(null);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   return (
@@ -52,11 +78,9 @@ export default function Seeker() {
           </button>
           <button
             onClick={() => setView("notizen")}
-            className="btn p-2 bg-gray-400 text-white rounded cursor-not-allowed"
-            disabled
-            title="Notizen werden aktuell nicht unterstützt"
+            className="btn p-2 mb-4 bg-gray-600 text-white rounded hover:bg-gray-700"
           >
-            Notizen (bald)
+            Notizen
           </button>
         </>
       )}
@@ -127,8 +151,7 @@ export default function Seeker() {
             onClick={() => {
               setView("fragen");
               setSelectedCompareCard(null);
-              // Achtung: nicht hier resetten, sonst verliert man Speicher, erst Reset explizit drücken
-              // setUsedCompareOptions([]);
+              // NICHT usedCompareOptions resetten, soll persistent bleiben
             }}
             className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
@@ -174,11 +197,11 @@ export default function Seeker() {
           </button>
           <p>Notizen werden noch implementiert.</p>
 
-          {/* RESET BUTTON HIER */}
+          {/* RESET BUTTON */}
           <button
             onClick={resetUsedOptions}
             className="btn p-2 mt-6 bg-red-600 text-white rounded hover:bg-red-700"
-            title="Alle verwendeten Fragen zurücksetzen"
+            title="Alle benutzten Fragen zurücksetzen"
           >
             Reset alle benutzten Fragen
           </button>
