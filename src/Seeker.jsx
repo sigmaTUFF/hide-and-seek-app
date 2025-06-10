@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const compareOptions = [
   "Spielplatz",
@@ -17,42 +17,42 @@ const compareOptions = [
   "See",
 ];
 
+const precisionRanges = ["500m", "1km", "2km", "3km"];
+
 export default function Seeker() {
-  const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche
-  const [usedCompareOptions, setUsedCompareOptions] = useState(() => {
-    const saved = localStorage.getItem("usedCompareOptions");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision
+  const [usedCompareOptions, setUsedCompareOptions] = useState([]);
+  const [usedPrecisionWords, setUsedPrecisionWords] = useState([]);
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
-  const [previewOption, setPreviewOption] = useState(null); // wird jetzt Objekt sein: { option, text }
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [selectedPrecisionCard, setSelectedPrecisionCard] = useState(null);
+  const [selectedPrecisionRange, setSelectedPrecisionRange] = useState(precisionRanges[0]);
 
-  useEffect(() => {
-    localStorage.setItem("usedCompareOptions", JSON.stringify(usedCompareOptions));
-  }, [usedCompareOptions]);
-
-  const previewCompareOption = (option) => {
-    setPreviewOption({
-      option,
-      text: `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`,
-    });
-  };
-
-  const useCompareOption = ({ option }) => {
+  // Vergleichsfrage verwenden
+  const useCompareOption = (option) => {
     setSelectedCompareCard(
       `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
     );
     setUsedCompareOptions((prev) => [...prev, option]);
-    setPreviewOption(null);
   };
 
-  const isOptionUsed = (option) => usedCompareOptions.includes(option);
+  // Präzisionsfrage Wort verwenden
+  const usePrecisionWord = (word) => {
+    setSelectedPrecisionCard(
+      `Von allen ${word.toUpperCase()} in ${selectedPrecisionRange} Umkreis: welchem bist du am nächsten?`
+    );
+    setUsedPrecisionWords((prev) => [...prev, word]);
+  };
 
+  // Hilfsfunktionen
+  const isCompareUsed = (option) => usedCompareOptions.includes(option);
+  const isPrecisionWordUsed = (word) => usedPrecisionWords.includes(word);
+
+  // Reset alle verwendeten Karten
   const resetUsed = () => {
     setUsedCompareOptions([]);
+    setUsedPrecisionWords([]);
     setSelectedCompareCard(null);
-    setPreviewOption(null);
-    setShowResetConfirm(false);
+    setSelectedPrecisionCard(null);
   };
 
   return (
@@ -74,35 +74,12 @@ export default function Seeker() {
           >
             Notizen (bald)
           </button>
-
-          {!showResetConfirm && (
-            <button
-              onClick={() => setShowResetConfirm(true)}
-              className="btn p-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Reset (alle genutzten Fragen zurücksetzen)
-            </button>
-          )}
-
-          {showResetConfirm && (
-            <div className="mt-4 p-4 border rounded bg-yellow-100">
-              <p className="mb-2 font-semibold">
-                Möchtest du wirklich alle genutzten Fragen zurücksetzen?
-              </p>
-              <button
-                onClick={resetUsed}
-                className="btn p-2 mr-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Ja, zurücksetzen
-              </button>
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                className="btn p-2 bg-gray-400 text-black rounded hover:bg-gray-500"
-              >
-                Abbrechen
-              </button>
-            </div>
-          )}
+          <button
+            onClick={resetUsed}
+            className="btn p-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Reset alle verwendeten Karten
+          </button>
         </>
       )}
 
@@ -124,11 +101,9 @@ export default function Seeker() {
             Vergleiche
           </button>
 
-          {/* Andere Kategorien bleiben deaktiviert */}
           <button
-            onClick={() => alert("Noch nicht implementiert")}
-            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
-            disabled
+            onClick={() => setView("praezision")}
+            className="btn p-3 mb-2 w-full bg-green-600 text-white rounded hover:bg-green-700"
           >
             Präzisionsfrage
           </button>
@@ -167,13 +142,13 @@ export default function Seeker() {
         </>
       )}
 
+      {/* Vergleiche Kategorie */}
       {view === "vergleiche" && (
         <>
           <button
             onClick={() => {
               setView("fragen");
               setSelectedCompareCard(null);
-              setPreviewOption(null);
             }}
             className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
@@ -188,10 +163,10 @@ export default function Seeker() {
             {compareOptions.map((option) => (
               <button
                 key={option}
-                onClick={() => previewCompareOption(option)}
-                disabled={isOptionUsed(option)}
+                onClick={() => useCompareOption(option)}
+                disabled={isCompareUsed(option)}
                 className={`p-2 rounded border ${
-                  isOptionUsed(option)
+                  isCompareUsed(option)
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-blue-500 text-white hover:bg-blue-600"
                 }`}
@@ -201,30 +176,70 @@ export default function Seeker() {
             ))}
           </div>
 
-          {previewOption && (
-            <div className="mb-4">
-              <p className="mb-2 font-semibold">Vorschau:</p>
-              <div className="border rounded p-4 bg-yellow-100 text-lg font-bold max-w-xl mx-auto">
-                {previewOption.text}
-              </div>
-              <button
-                onClick={() => useCompareOption(previewOption)}
-                className="btn p-2 mt-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Frage verwenden
-              </button>
-              <button
-                onClick={() => setPreviewOption(null)}
-                className="btn p-2 mt-2 ml-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Abbrechen
-              </button>
-            </div>
-          )}
-
           {selectedCompareCard && (
             <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
               {selectedCompareCard}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Präzisionsfrage Kategorie */}
+      {view === "praezision" && (
+        <>
+          <button
+            onClick={() => {
+              setView("fragen");
+              setSelectedPrecisionCard(null);
+            }}
+            className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
+          >
+            &larr; Zurück zu Fragen
+          </button>
+
+          <h2 className="text-xl font-semibold mb-2">Präzisionsfrage</h2>
+          <p className="mb-1 font-semibold">Preis: Der Verstecker darf 3 Karten ziehen</p>
+          <p className="mb-4 italic">Beispiel: Von allen ___ in 1km Umkreis: welchem bist du am nächsten?</p>
+
+          <div className="mb-4">
+            <p className="font-semibold mb-2">Wähle den Umkreis:</p>
+            <div className="flex gap-2 flex-wrap justify-center">
+              {precisionRanges.map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setSelectedPrecisionRange(range)}
+                  className={`p-2 rounded border ${
+                    selectedPrecisionRange === range
+                      ? "bg-green-700 text-white"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {compareOptions.map((option) => (
+              <button
+                key={option}
+                onClick={() => usePrecisionWord(option)}
+                disabled={isPrecisionWordUsed(option)}
+                className={`p-2 rounded border ${
+                  isPrecisionWordUsed(option)
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-purple-600 text-white hover:bg-purple-700"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {selectedPrecisionCard && (
+            <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
+              {selectedPrecisionCard}
             </div>
           )}
         </>
