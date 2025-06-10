@@ -33,6 +33,12 @@ export default function Seeker() {
   // Hilfsfunktion ob Button deaktiviert sein soll
   const isOptionUsed = (option) => usedCompareOptions.includes(option);
 
+  // Reset-Funktion für benutzte Optionen
+  const resetUsedOptions = () => {
+    setUsedCompareOptions([]);
+    setSelectedCompareCard(null);
+  };
+
   return (
     <div className="max-w-md mx-auto p-4 text-center min-h-screen flex flex-col">
       {view === "menu" && (
@@ -121,7 +127,8 @@ export default function Seeker() {
             onClick={() => {
               setView("fragen");
               setSelectedCompareCard(null);
-              setUsedCompareOptions([]);
+              // Achtung: nicht hier resetten, sonst verliert man Speicher, erst Reset explizit drücken
+              // setUsedCompareOptions([]);
             }}
             className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
@@ -166,6 +173,15 @@ export default function Seeker() {
             &larr; Zurück zur Auswahl
           </button>
           <p>Notizen werden noch implementiert.</p>
+
+          {/* RESET BUTTON HIER */}
+          <button
+            onClick={resetUsedOptions}
+            className="btn p-2 mt-6 bg-red-600 text-white rounded hover:bg-red-700"
+            title="Alle verwendeten Fragen zurücksetzen"
+          >
+            Reset alle benutzten Fragen
+          </button>
         </div>
       )}
     </div>
