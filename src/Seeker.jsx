@@ -20,38 +20,40 @@ const compareOptions = [
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche
   const [usedCompareOptions, setUsedCompareOptions] = useState(() => {
-    // Lade gespeicherte Optionen aus localStorage beim Start
+    // Aus localStorage laden, falls vorhanden
     const saved = localStorage.getItem("usedCompareOptions");
     return saved ? JSON.parse(saved) : [];
   });
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
+  const [previewOption, setPreviewOption] = useState(null); // Vorschau Option
 
-  // Speichere usedCompareOptions bei jeder Änderung im localStorage
+  // Speichern in localStorage wenn sich usedCompareOptions ändert
   useEffect(() => {
     localStorage.setItem("usedCompareOptions", JSON.stringify(usedCompareOptions));
   }, [usedCompareOptions]);
 
-  // Funktion um Vergleichsfrage-Button zu verwenden mit Bestätigung
+  // Funktion um Vergleichsfrage-Vorschau zu zeigen
+  const previewCompareOption = (option) => {
+    setPreviewOption(
+      `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
+    );
+  };
+
+  // Funktion um Vergleichsfrage zu verwenden (final bestätigen)
   const useCompareOption = (option) => {
-    if (window.confirm(`Willst du die Frage mit "${option}" wirklich verwenden?`)) {
-      setSelectedCompareCard(
-        `Ist dein nächster ${option.toUpperCase()} derselbe wie mein nächster ${option.toUpperCase()}?`
-      );
-      setUsedCompareOptions((prev) => [...prev, option]);
-    }
+    setSelectedCompareCard(previewOption);
+    setUsedCompareOptions((prev) => [...prev, option]);
+    setPreviewOption(null);
   };
 
   // Hilfsfunktion ob Button deaktiviert sein soll
   const isOptionUsed = (option) => usedCompareOptions.includes(option);
 
-  // Reset-Funktion: Löscht alle gespeicherten Daten und setzt States zurück
-  const resetAll = () => {
-    if (window.confirm("Willst du wirklich alle gespeicherten Daten zurücksetzen?")) {
-      localStorage.removeItem("usedCompareOptions");
-      setUsedCompareOptions([]);
-      setSelectedCompareCard(null);
-      setView("menu");
-    }
+  // Reset Funktion
+  const resetUsed = () => {
+    setUsedCompareOptions([]);
+    setSelectedCompareCard(null);
+    setPreviewOption(null);
   };
 
   return (
@@ -67,9 +69,17 @@ export default function Seeker() {
           </button>
           <button
             onClick={() => setView("notizen")}
-            className="btn p-2 mb-4 bg-gray-400 text-white rounded"
+            className="btn p-2 mb-4 bg-gray-400 text-white rounded cursor-not-allowed"
+            disabled
+            title="Notizen werden aktuell nicht unterstützt"
           >
-            Notizen
+            Notizen (bald)
+          </button>
+          <button
+            onClick={resetUsed}
+            className="btn p-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Reset (alle genutzten Fragen zurücksetzen)
           </button>
         </>
       )}
@@ -92,6 +102,7 @@ export default function Seeker() {
             Vergleiche
           </button>
 
+          {/* Andere Kategorien bleiben deaktiviert */}
           <button
             onClick={() => alert("Noch nicht implementiert")}
             className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
@@ -140,7 +151,7 @@ export default function Seeker() {
             onClick={() => {
               setView("fragen");
               setSelectedCompareCard(null);
-              // setUsedCompareOptions([]); // nicht zurücksetzen hier, wird nur beim Reset gemacht
+              setPreviewOption(null);
             }}
             className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
@@ -155,7 +166,7 @@ export default function Seeker() {
             {compareOptions.map((option) => (
               <button
                 key={option}
-                onClick={() => useCompareOption(option)}
+                onClick={() => previewCompareOption(option)}
                 disabled={isOptionUsed(option)}
                 className={`p-2 rounded border ${
                   isOptionUsed(option)
@@ -167,6 +178,27 @@ export default function Seeker() {
               </button>
             ))}
           </div>
+
+          {previewOption && (
+            <div className="mb-4">
+              <p className="mb-2 font-semibold">Vorschau:</p>
+              <div className="border rounded p-4 bg-yellow-100 text-lg font-bold max-w-xl mx-auto">
+                {previewOption}
+              </div>
+              <button
+                onClick={() => useCompareOption(previewOption.split(" ")[2].toLowerCase())}
+                className="btn p-2 mt-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Frage verwenden
+              </button>
+              <button
+                onClick={() => setPreviewOption(null)}
+                className="btn p-2 mt-2 ml-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
 
           {selectedCompareCard && (
             <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
@@ -185,12 +217,6 @@ export default function Seeker() {
             &larr; Zurück zur Auswahl
           </button>
           <p>Notizen werden noch implementiert.</p>
-          <button
-            onClick={resetAll}
-            className="btn p-2 mt-4 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Reset alle gespeicherten Fragen
-          </button>
         </div>
       )}
     </div>
