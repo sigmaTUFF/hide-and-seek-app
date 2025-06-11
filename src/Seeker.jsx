@@ -19,8 +19,17 @@ const compareOptions = [
 
 const precisionRanges = ["500m", "1km", "2km", "3km"];
 
+const photoPrompts = [
+  "dem nächsten Baum (ganzer Baum)",
+  "dem Himmel",
+  "dir",
+  "der größten Struktur",
+  "dem nächsten Gebäude",
+  "der nächsten Straße",
+];
+
 export default function Seeker() {
-  const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision
+  const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision, fotos
 
   // States Vergleichskategorie
   const [usedCompareOptions, setUsedCompareOptions] = useState(() => {
@@ -37,6 +46,13 @@ export default function Seeker() {
   const [pendingPrecisionWord, setPendingPrecisionWord] = useState(null); // Für Bestätigung
   const [selectedPrecisionRange, setSelectedPrecisionRange] = useState(precisionRanges[0]);
 
+  // States Fotoskategorie
+  const [usedPhotoPrompts, setUsedPhotoPrompts] = useState(() => {
+    return JSON.parse(localStorage.getItem("usedPhotoPrompts")) || [];
+  });
+  const [selectedPhotoCard, setSelectedPhotoCard] = useState(null);
+  const [pendingPhotoPrompt, setPendingPhotoPrompt] = useState(null); // Für Bestätigung
+
   // Reset Bestätigung
   const [resetConfirm, setResetConfirm] = useState(false);
 
@@ -48,6 +64,10 @@ export default function Seeker() {
   useEffect(() => {
     localStorage.setItem("usedPrecisionWords", JSON.stringify(usedPrecisionWords));
   }, [usedPrecisionWords]);
+
+  useEffect(() => {
+    localStorage.setItem("usedPhotoPrompts", JSON.stringify(usedPhotoPrompts));
+  }, [usedPhotoPrompts]);
 
   // Vergleichsoption "benutzen" mit Bestätigung
   const requestUseCompareOption = (option) => {
@@ -85,6 +105,22 @@ export default function Seeker() {
     setPendingPrecisionWord(null);
   };
 
+  // Fotos "benutzen" mit Bestätigung
+  const requestUsePhotoPrompt = (prompt) => {
+    setPendingPhotoPrompt(prompt);
+  };
+
+  const confirmUsePhotoPrompt = () => {
+    if (!pendingPhotoPrompt) return;
+    setSelectedPhotoCard(`Schick mir ein Foto von ${pendingPhotoPrompt}, das du von deinem Standort aus erkennen kannst.`);
+    setUsedPhotoPrompts((prev) => [...prev, pendingPhotoPrompt]);
+    setPendingPhotoPrompt(null);
+  };
+
+  const cancelUsePhotoPrompt = () => {
+    setPendingPhotoPrompt(null);
+  };
+
   // Reset aller verwendeten Karten mit Bestätigung
   const startReset = () => {
     setResetConfirm(true);
@@ -93,10 +129,13 @@ export default function Seeker() {
   const confirmReset = () => {
     setUsedCompareOptions([]);
     setUsedPrecisionWords([]);
+    setUsedPhotoPrompts([]);
     setSelectedCompareCard(null);
     setSelectedPrecisionCard(null);
+    setSelectedPhotoCard(null);
     setPendingCompareOption(null);
     setPendingPrecisionWord(null);
+    setPendingPhotoPrompt(null);
     setResetConfirm(false);
   };
 
@@ -107,6 +146,7 @@ export default function Seeker() {
   // Hilfsfunktionen deaktivieren Buttons
   const isCompareUsed = (option) => usedCompareOptions.includes(option);
   const isPrecisionWordUsed = (word) => usedPrecisionWords.includes(word);
+  const isPhotoPromptUsed = (prompt) => usedPhotoPrompts.includes(prompt);
 
   return (
     <div className="max-w-md mx-auto p-4 text-center min-h-screen flex flex-col">
@@ -182,9 +222,8 @@ export default function Seeker() {
           </button>
 
           <button
-            onClick={() => alert("Noch nicht implementiert")}
-            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
-            disabled
+            onClick={() => setView("fotos")}
+            className="btn p-3 mb-2 w-full bg-green-600 text-white rounded hover:bg-green-700"
           >
             Fotos
           </button>
@@ -297,49 +336,45 @@ export default function Seeker() {
           </button>
 
           <h2 className="text-xl font-semibold mb-2">Präzisionsfrage</h2>
-          <p className="mb-1 font-semibold">Preis: Der Verstecker darf 3 Karten ziehen</p>
-          <p className="mb-4 italic">Beispiel: Von allen ___ in 1km Umkreis: welchem bist du am nächsten?</p>
+          <p className="mb-1 font-semibold">Preis: Der Verstecker darf 1 Karte ziehen</p>
+          <p className="mb-4 italic">Beispiel: Von allen ___ in 500m Umkreis: welchem bist du am nächsten?</p>
 
-          <div className="mb-4">
-            <p className="font-semibold mb-2">Wähle den Umkreis:</p>
-            <div className="flex gap-2 flex-wrap justify-center">
-              {precisionRanges.map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setSelectedPrecisionRange(range)}
-                  disabled={pendingPrecisionWord !== null}
-                  className={`p-2 rounded border ${
-                    selectedPrecisionRange === range
-                      ? "bg-green-700 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            {compareOptions.map((option) => (
+          <div className="mb-4 flex justify-center gap-4 flex-wrap">
+            {precisionRanges.map((range) => (
               <button
-                key={option}
-                onClick={() => requestUsePrecisionWord(option)}
-                disabled={isPrecisionWordUsed(option) || pendingPrecisionWord !== null}
-                className={`p-2 rounded border ${
-                  isPrecisionWordUsed(option)
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : pendingPrecisionWord !== null
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-purple-600 text-white hover:bg-purple-700"
+                key={range}
+                onClick={() => setSelectedPrecisionRange(range)}
+                className={`px-3 py-1 rounded border ${
+                  selectedPrecisionRange === range
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
-                {option}
+                {range}
               </button>
             ))}
           </div>
 
-          {/* Bestätigung für Präzision */}
+          <div className="grid grid-cols-2 gap-2 mb-4 max-w-xl mx-auto">
+            {["Spielplatz", "Bahnhof", "Bushaltestelle", "Sportplatz"].map((word) => (
+              <button
+                key={word}
+                onClick={() => requestUsePrecisionWord(word)}
+                disabled={isPrecisionWordUsed(word) || pendingPrecisionWord !== null}
+                className={`p-2 rounded border ${
+                  isPrecisionWordUsed(word)
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : pendingPrecisionWord !== null
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+              >
+                {word}
+              </button>
+            ))}
+          </div>
+
+          {/* Bestätigung für Präzisionsfrage */}
           {pendingPrecisionWord && (
             <div className="mb-4 p-3 border rounded bg-yellow-100 max-w-xl mx-auto">
               <p className="mb-2 font-semibold">Bestätige die Verwendung der Frage:</p>
@@ -369,17 +404,86 @@ export default function Seeker() {
         </>
       )}
 
-      {/* Notizen */}
+      {/* Fotos */}
+      {view === "fotos" && (
+        <>
+          <button
+            onClick={() => {
+              setView("fragen");
+              setSelectedPhotoCard(null);
+              setPendingPhotoPrompt(null);
+            }}
+            className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
+          >
+            &larr; Zurück zu Fragen
+          </button>
+
+          <h2 className="text-xl font-semibold mb-2">Fotos</h2>
+          <p className="mb-1 font-semibold">Preis: Der Verstecker darf 1 Karte ziehen</p>
+          <p className="mb-4 italic">
+            Schick mir ein Foto von ___, das du von deinem Standort aus erkennen kannst.
+          </p>
+
+          <div className="grid grid-cols-1 gap-2 mb-4 max-w-xl mx-auto">
+            {photoPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => requestUsePhotoPrompt(prompt)}
+                disabled={isPhotoPromptUsed(prompt) || pendingPhotoPrompt !== null}
+                className={`p-2 rounded border ${
+                  isPhotoPromptUsed(prompt)
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : pendingPhotoPrompt !== null
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+
+          {/* Bestätigung für Fotos */}
+          {pendingPhotoPrompt && (
+            <div className="mb-4 p-3 border rounded bg-yellow-100 max-w-xl mx-auto">
+              <p className="mb-2 font-semibold">Bestätige die Verwendung der Frage:</p>
+              <p className="mb-4 font-bold">
+                Schick mir ein Foto von {pendingPhotoPrompt}, das du von deinem Standort aus erkennen kannst.
+              </p>
+              <button
+                onClick={confirmUsePhotoPrompt}
+                className="btn p-2 mr-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Bestätigen
+              </button>
+              <button
+                onClick={cancelUsePhotoPrompt}
+                className="btn p-2 bg-gray-400 rounded hover:bg-gray-500"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
+
+          {selectedPhotoCard && (
+            <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
+              {selectedPhotoCard}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Notizen (noch nicht implementiert) */}
       {view === "notizen" && (
-        <div>
+        <>
           <button
             onClick={() => setView("menu")}
             className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
           >
-            &larr; Zurück zur Auswahl
+            &larr; Zurück zum Menü
           </button>
-          <p>Notizen werden noch implementiert.</p>
-        </div>
+          <p>Notizen werden aktuell nicht unterstützt.</p>
+        </>
       )}
     </div>
   );
