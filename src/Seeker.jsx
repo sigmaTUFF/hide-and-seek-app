@@ -28,35 +28,60 @@ const photoPrompts = [
   "der nächsten Straße",
 ];
 
-export default function Seeker() {
-  const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision, fotos
+const masseOptions = [
+  "Spielplatz",
+  "Bahnhof",
+  "Bushaltestelle",
+  "Sportplatz",
+  "Museum",
+  "Rathaus",
+  "Kirche",
+  "Apotheke",
+  "Restaurant",
+  "Lebensmittelladen",
+  "Arztpraxis",
+  "Schule",
+  "Kindergarten",
+  "See",
+];
 
-  // States Vergleichskategorie
+export default function Seeker() {
+  const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision, fotos, masse
+
+  // Vergleichskategorie
   const [usedCompareOptions, setUsedCompareOptions] = useState(() => {
     return JSON.parse(localStorage.getItem("usedCompareOptions")) || [];
   });
   const [selectedCompareCard, setSelectedCompareCard] = useState(null);
-  const [pendingCompareOption, setPendingCompareOption] = useState(null); // Für Bestätigung
+  const [pendingCompareOption, setPendingCompareOption] = useState(null);
 
-  // States Präzisionskategorie
+  // Präzision
   const [usedPrecisionWords, setUsedPrecisionWords] = useState(() => {
     return JSON.parse(localStorage.getItem("usedPrecisionWords")) || [];
   });
   const [selectedPrecisionCard, setSelectedPrecisionCard] = useState(null);
-  const [pendingPrecisionWord, setPendingPrecisionWord] = useState(null); // Für Bestätigung
+  const [pendingPrecisionWord, setPendingPrecisionWord] = useState(null);
   const [selectedPrecisionRange, setSelectedPrecisionRange] = useState(precisionRanges[0]);
 
-  // States Fotoskategorie
+  // Fotos
   const [usedPhotoPrompts, setUsedPhotoPrompts] = useState(() => {
     return JSON.parse(localStorage.getItem("usedPhotoPrompts")) || [];
   });
   const [selectedPhotoCard, setSelectedPhotoCard] = useState(null);
-  const [pendingPhotoPrompt, setPendingPhotoPrompt] = useState(null); // Für Bestätigung
+  const [pendingPhotoPrompt, setPendingPhotoPrompt] = useState(null);
 
-  // Reset Bestätigung
+  // Maße
+  const [usedMasseOptions, setUsedMasseOptions] = useState(() => {
+    return JSON.parse(localStorage.getItem("usedMasseOptions")) || [];
+  });
+  const [selectedMasseCard, setSelectedMasseCard] = useState(null);
+  const [pendingMasseOption, setPendingMasseOption] = useState(null);
+  const [distanceInput, setDistanceInput] = useState(""); // Eingabe für Entfernung
+
+  // Reset
   const [resetConfirm, setResetConfirm] = useState(false);
 
-  // Speicherung in localStorage bei Änderungen
+  // Speicher localStorage Updates
   useEffect(() => {
     localStorage.setItem("usedCompareOptions", JSON.stringify(usedCompareOptions));
   }, [usedCompareOptions]);
@@ -69,7 +94,11 @@ export default function Seeker() {
     localStorage.setItem("usedPhotoPrompts", JSON.stringify(usedPhotoPrompts));
   }, [usedPhotoPrompts]);
 
-  // Vergleichsoption "benutzen" mit Bestätigung
+  useEffect(() => {
+    localStorage.setItem("usedMasseOptions", JSON.stringify(usedMasseOptions));
+  }, [usedMasseOptions]);
+
+  // Vergleich Anfrage
   const requestUseCompareOption = (option) => {
     setPendingCompareOption(option);
   };
@@ -87,7 +116,7 @@ export default function Seeker() {
     setPendingCompareOption(null);
   };
 
-  // Präzisionswort "benutzen" mit Bestätigung
+  // Präzision Anfrage
   const requestUsePrecisionWord = (word) => {
     setPendingPrecisionWord(word);
   };
@@ -105,7 +134,7 @@ export default function Seeker() {
     setPendingPrecisionWord(null);
   };
 
-  // Fotos "benutzen" mit Bestätigung
+  // Fotos Anfrage
   const requestUsePhotoPrompt = (prompt) => {
     setPendingPhotoPrompt(prompt);
   };
@@ -121,7 +150,32 @@ export default function Seeker() {
     setPendingPhotoPrompt(null);
   };
 
-  // Reset aller verwendeten Karten mit Bestätigung
+  // Maße Anfrage
+  const requestUseMasseOption = (option) => {
+    setPendingMasseOption(option);
+    setDistanceInput(""); // Eingabe zurücksetzen bei neuem prompt
+  };
+
+  const confirmUseMasseOption = () => {
+    if (!pendingMasseOption) return;
+    if (!distanceInput.trim()) {
+      alert("Bitte gib eine Entfernung ein!");
+      return;
+    }
+    setSelectedMasseCard(
+      `Bist du näher an ${pendingMasseOption.toUpperCase()} als ich? (meine Entfernung = ${distanceInput.trim()})`
+    );
+    setUsedMasseOptions((prev) => [...prev, pendingMasseOption]);
+    setPendingMasseOption(null);
+    setDistanceInput("");
+  };
+
+  const cancelUseMasseOption = () => {
+    setPendingMasseOption(null);
+    setDistanceInput("");
+  };
+
+  // Reset alle
   const startReset = () => {
     setResetConfirm(true);
   };
@@ -130,12 +184,16 @@ export default function Seeker() {
     setUsedCompareOptions([]);
     setUsedPrecisionWords([]);
     setUsedPhotoPrompts([]);
+    setUsedMasseOptions([]);
     setSelectedCompareCard(null);
     setSelectedPrecisionCard(null);
     setSelectedPhotoCard(null);
+    setSelectedMasseCard(null);
     setPendingCompareOption(null);
     setPendingPrecisionWord(null);
     setPendingPhotoPrompt(null);
+    setPendingMasseOption(null);
+    setDistanceInput("");
     setResetConfirm(false);
   };
 
@@ -143,10 +201,11 @@ export default function Seeker() {
     setResetConfirm(false);
   };
 
-  // Hilfsfunktionen deaktivieren Buttons
+  // Disable helpers
   const isCompareUsed = (option) => usedCompareOptions.includes(option);
   const isPrecisionWordUsed = (word) => usedPrecisionWords.includes(word);
   const isPhotoPromptUsed = (prompt) => usedPhotoPrompts.includes(prompt);
+  const isMasseUsed = (option) => usedMasseOptions.includes(option);
 
   return (
     <div className="max-w-md mx-auto p-4 text-center min-h-screen flex flex-col">
@@ -229,9 +288,8 @@ export default function Seeker() {
           </button>
 
           <button
-            onClick={() => alert("Noch nicht implementiert")}
-            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
-            disabled
+            onClick={() => setView("masse")}
+            className="btn p-3 mb-2 w-full bg-green-600 text-white rounded hover:bg-green-700"
           >
             Maße
           </button>
@@ -291,7 +349,7 @@ export default function Seeker() {
             ))}
           </div>
 
-          {/* Bestätigung für Vergleiche */}
+          {/* Bestätigung für Vergleich */}
           {pendingCompareOption && (
             <div className="mb-4 p-3 border rounded bg-yellow-100 max-w-xl mx-auto">
               <p className="mb-2 font-semibold">Bestätige die Verwendung der Frage:</p>
@@ -321,7 +379,7 @@ export default function Seeker() {
         </>
       )}
 
-      {/* Präzisionsfrage */}
+      {/* Präzision */}
       {view === "praezision" && (
         <>
           <button
@@ -468,6 +526,82 @@ export default function Seeker() {
           {selectedPhotoCard && (
             <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
               {selectedPhotoCard}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Maße */}
+      {view === "masse" && (
+        <>
+          <button
+            onClick={() => {
+              setView("fragen");
+              setSelectedMasseCard(null);
+              setPendingMasseOption(null);
+              setDistanceInput("");
+            }}
+            className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
+          >
+            &larr; Zurück zu Fragen
+          </button>
+
+          <h2 className="text-xl font-semibold mb-2">Maße</h2>
+          <p className="mb-1 font-semibold">Preis: Der Verstecker darf 2 Karten ziehen</p>
+          <p className="mb-4 italic">
+            Bist du näher an ___ als ich? (meine Entfernung = Eingabefeld)
+          </p>
+
+          <div className="grid grid-cols-2 gap-2 mb-4 max-w-xl mx-auto">
+            {masseOptions.map((option) => (
+              <button
+                key={option}
+                onClick={() => requestUseMasseOption(option)}
+                disabled={isMasseUsed(option) || pendingMasseOption !== null}
+                className={`p-2 rounded border ${
+                  isMasseUsed(option)
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : pendingMasseOption !== null
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {/* Eingabefeld und Bestätigung */}
+          {pendingMasseOption && (
+            <div className="mb-4 p-3 border rounded bg-yellow-100 max-w-xl mx-auto text-left">
+              <p className="mb-2 font-semibold">Bestätige die Verwendung der Frage:</p>
+              <p className="mb-2 font-bold">
+                Bist du näher an {pendingMasseOption.toUpperCase()} als ich? (meine Entfernung = <input
+                  type="text"
+                  value={distanceInput}
+                  onChange={(e) => setDistanceInput(e.target.value)}
+                  placeholder="z.B. 300m"
+                  className="border p-1 rounded w-24 ml-1"
+                />)
+              </p>
+              <button
+                onClick={confirmUseMasseOption}
+                className="btn p-2 mr-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Bestätigen
+              </button>
+              <button
+                onClick={cancelUseMasseOption}
+                className="btn p-2 bg-gray-400 rounded hover:bg-gray-500"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
+
+          {selectedMasseCard && (
+            <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
+              {selectedMasseCard}
             </div>
           )}
         </>
