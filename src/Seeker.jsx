@@ -694,24 +694,4 @@ export default function Seeker() {
 }
 
 export default Fragen;
-Hier ist eine kurze Zusammenfassung, was der React-Komponenten-Code macht:
 
-- Er zeigt verschiedene Ansichten („views“) basierend auf dem `view`-State an:  
-  - Fragen  
-  - Vergleiche  
-  - Präzisionsfrage  
-  - Fotos  
-  - Maße  
-  - Thermometer  
-
-- Jede Ansicht hat eigene Buttons, Eingabefelder und Logik, z.B. für:  
-  - Fragen auswählen  
-  - Bestätigung von Aktionen (z.B. Vergleich, Fotoanfrage)  
-  - Eingabe von Entfernungen  
-  - Anzeigen von Ergebnissen oder ausgewählten Karten  
-
-- Es gibt auch Buttons, um zwischen den Ansichten zu wechseln und um Aktionen abzubrechen.
-
-- Die Buttons sind meist grün (`bg-green-600`) mit Hover-Effekt, Abbruchbuttons grau.
-
-Möchtest du, dass ich dir helfe, eine bestimmte Funktion zu verstehen, zu erweitern oder umzuschreiben? Oder brauchst du eine Zusammenfassung, wie du das in dein Projekt einbaust?
