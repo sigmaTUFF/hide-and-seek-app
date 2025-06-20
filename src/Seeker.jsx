@@ -644,43 +644,43 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
       )}
 
       {/* Thermometer */}
-{view === "thermometer" && (
-  <>
-    <button
-      onClick={() => {
-        setView("fragen");
-        setSelectedThermometerCard(null);
-        setPendingThermometerOption(null);
-      }}
-      className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
-    >
-      &larr; Zurück zu Fragen
-    </button>
+      {view === "thermometer" && (
+        <>
+          <button
+            onClick={() => {
+              setView("fragen");
+              setSelectedThermometerCard(null);
+              setPendingThermometerOption(null);
+            }}
+            className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
+          >
+            &larr; Zurück zu Fragen
+          </button>
 
-    <h2 className="text-xl font-semibold mb-2">Thermometer</h2>
-    <p className="mb-1 font-semibold">Preis: Der Verstecker darf 1 Karte ziehen</p>
-    <p className="mb-4 italic">
-      Ich bin ___ gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?
-    </p>
+          <h2 className="text-xl font-semibold mb-2">Thermometer</h2>
+          <p className="mb-1 font-semibold">Preis: Der Verstecker darf 1 Karte ziehen</p>
+          <p className="mb-4 italic">
+            Ich bin ___ gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?
+          </p>
 
-    <div className="grid grid-cols-2 gap-2 mb-4 max-w-xl mx-auto">
-      {thermometerOptions.map((option) => (
-        <button
-          key={option}
-          onClick={() => requestUseThermometerOption(option)}
-          disabled={isThermometerUsed(option) || pendingThermometerOption !== null}
-          className={p-2 rounded border ${
-            isThermometerUsed(option)
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : pendingThermometerOption !== null
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          }}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
+          <div className="grid grid-cols-2 gap-2 mb-4 max-w-xl mx-auto">
+            {thermometerOptions.map((option) => (
+              <button
+                key={option}
+                onClick={() => requestUseThermometerOption(option)}
+                disabled={isThermometerUsed(option) || pendingThermometerOption !== null}
+                className={`p-2 rounded border ${
+                  isThermometerUsed(option)
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : pendingThermometerOption !== null
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
 
     {/* Bestätigung für Thermometer */}
     {pendingThermometerOption && (
