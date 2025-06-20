@@ -194,7 +194,8 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
 const confirmUseThermometerOption = () => {
   if (!pendingThermometerOption) return;
   setSelectedThermometerCard(
-    Ich bin ${pendingThermometerOption} gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?
+  setSelectedThermometerCard(
+    `Ich bin ${pendingThermometerOption} gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?`
   );
   setUsedThermometerOptions((prev) => [...prev, pendingThermometerOption]);
   setPendingThermometerOption(null);
