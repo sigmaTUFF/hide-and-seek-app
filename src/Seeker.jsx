@@ -45,6 +45,8 @@ const masseOptions = [
   "See",
 ];
 
+const thermometerOptions = ["100m", "200m", "300m", "500m", "750m", "1km"];
+
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision, fotos, masse
 
@@ -78,6 +80,12 @@ export default function Seeker() {
   const [pendingMasseOption, setPendingMasseOption] = useState(null);
   const [distanceInput, setDistanceInput] = useState(""); // Eingabe für Entfernung
 
+  const [usedThermometerOptions, setUsedThermometerOptions] = useState(() => {
+  return JSON.parse(localStorage.getItem("usedThermometerOptions")) || [];
+});
+const [selectedThermometerCard, setSelectedThermometerCard] = useState(null);
+const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
+
   // Reset
   const [resetConfirm, setResetConfirm] = useState(false);
 
@@ -97,6 +105,10 @@ export default function Seeker() {
   useEffect(() => {
     localStorage.setItem("usedMasseOptions", JSON.stringify(usedMasseOptions));
   }, [usedMasseOptions]);
+
+  useEffect(() => {
+  localStorage.setItem("usedThermometerOptions", JSON.stringify(usedThermometerOptions));
+}, [usedThermometerOptions]);
 
   // Vergleich Anfrage
   const requestUseCompareOption = (option) => {
@@ -175,6 +187,23 @@ export default function Seeker() {
     setDistanceInput("");
   };
 
+  const requestUseThermometerOption = (option) => {
+  setPendingThermometerOption(option);
+};
+
+const confirmUseThermometerOption = () => {
+  if (!pendingThermometerOption) return;
+  setSelectedThermometerCard(
+    Ich bin ${pendingThermometerOption} gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?
+  );
+  setUsedThermometerOptions((prev) => [...prev, pendingThermometerOption]);
+  setPendingThermometerOption(null);
+};
+
+const cancelUseThermometerOption = () => {
+  setPendingThermometerOption(null);
+};
+
   // Reset alle
   const startReset = () => {
     setResetConfirm(true);
@@ -193,8 +222,12 @@ export default function Seeker() {
     setPendingPrecisionWord(null);
     setPendingPhotoPrompt(null);
     setPendingMasseOption(null);
+    setUsedThermometerOptions([]);
+    setSelectedThermometerCard(null);
+    setPendingThermometerOption(null);
     setDistanceInput("");
     setResetConfirm(false);
+
   };
 
   const cancelReset = () => {
@@ -206,6 +239,8 @@ export default function Seeker() {
   const isPrecisionWordUsed = (word) => usedPrecisionWords.includes(word);
   const isPhotoPromptUsed = (prompt) => usedPhotoPrompts.includes(prompt);
   const isMasseUsed = (option) => usedMasseOptions.includes(option);
+  const isThermometerUsed = (option) => usedThermometerOptions.includes(option);
+
 
   return (
     <div className="max-w-md mx-auto p-4 text-center min-h-screen flex flex-col">
@@ -295,9 +330,8 @@ export default function Seeker() {
           </button>
 
           <button
-            onClick={() => alert("Noch nicht implementiert")}
-            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
-            disabled
+            onClick={() => setView("thermometer")}
+            className="btn p-3 mb-2 w-full bg-green-600 text-white rounded hover:bg-green-700"
           >
             Thermometer
           </button>
@@ -606,6 +640,75 @@ export default function Seeker() {
           )}
         </>
       )}
+
+      {/* Thermometer */}
+{view === "thermometer" && (
+  <>
+    <button
+      onClick={() => {
+        setView("fragen");
+        setSelectedThermometerCard(null);
+        setPendingThermometerOption(null);
+      }}
+      className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
+    >
+      &larr; Zurück zu Fragen
+    </button>
+
+    <h2 className="text-xl font-semibold mb-2">Thermometer</h2>
+    <p className="mb-1 font-semibold">Preis: Der Verstecker darf 1 Karte ziehen</p>
+    <p className="mb-4 italic">
+      Ich bin ___ gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?
+    </p>
+
+    <div className="grid grid-cols-2 gap-2 mb-4 max-w-xl mx-auto">
+      {thermometerOptions.map((option) => (
+        <button
+          key={option}
+          onClick={() => requestUseThermometerOption(option)}
+          disabled={isThermometerUsed(option) || pendingThermometerOption !== null}
+          className={p-2 rounded border ${
+            isThermometerUsed(option)
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : pendingThermometerOption !== null
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+          }}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+
+    {/* Bestätigung für Thermometer */}
+    {pendingThermometerOption && (
+      <div className="mb-4 p-3 border rounded bg-yellow-100 max-w-xl mx-auto">
+        <p className="mb-2 font-semibold">Bestätige die Verwendung der Frage:</p>
+        <p className="mb-4 font-bold">
+          Ich bin {pendingThermometerOption} gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?
+        </p>
+        <button
+          onClick={confirmUseThermometerOption}
+          className="btn p-2 mr-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Bestätigen
+        </button>
+        <button
+          onClick={cancelUseThermometerOption}
+          className="btn p-2 bg-gray-400 rounded hover:bg-gray-500"
+        >
+          Abbrechen
+        </button>
+      </div>
+    )}
+
+    {selectedThermometerCard && (
+      <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
+        {selectedThermometerCard}
+      </div>
+    )}
+  </>
+)}
 
       {/* Notizen (noch nicht implementiert) */}
       {view === "notizen" && (
