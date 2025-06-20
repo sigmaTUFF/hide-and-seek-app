@@ -47,7 +47,7 @@ const masseOptions = [
 
 const thermometerOptions = ["100m", "200m", "300m", "500m", "750m", "1km"];
 
-const radarOptions = ["100m", "250m", "1km", "2km", "3km"];
+const radarOptions = ["100m", "250m", "500m", "1km", "2km", "3km"];
 
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision, fotos, masse
