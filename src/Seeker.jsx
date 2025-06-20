@@ -187,23 +187,24 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
     setDistanceInput("");
   };
 
+  // Thermometer Anfrage
   const requestUseThermometerOption = (option) => {
-  setPendingThermometerOption(option);
-};
+    setPendingThermometerOption(option);
+  };
 
-const confirmUseThermometerOption = () => {
-  if (!pendingThermometerOption) return;
-  setSelectedThermometerCard(
-  setSelectedThermometerCard(
-    `Ich bin ${pendingThermometerOption} gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?`
-  );
-  setUsedThermometerOptions((prev) => [...prev, pendingThermometerOption]);
-  setPendingThermometerOption(null);
-};
+  const confirmUseThermometerOption = () => {
+    if (!pendingThermometerOption) return;
+    setSelectedThermometerCard(
+      `Ich bin ${pendingThermometerOption} gelaufen. Bin ich jetzt näher (wärmer) oder weiter weg (kälter)?`
+    );
+    setUsedThermometerOptions((prev) => [...prev, pendingThermometerOption]);
+    setPendingThermometerOption(null);
+  };
 
-const cancelUseThermometerOption = () => {
-  setPendingThermometerOption(null);
-};
+  const cancelUseThermometerOption = () => {
+    setPendingThermometerOption(null);
+  };
+
 
   // Reset alle
   const startReset = () => {
