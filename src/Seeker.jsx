@@ -47,6 +47,8 @@ const masseOptions = [
 
 const thermometerOptions = ["100m", "200m", "300m", "500m", "750m", "1km"];
 
+const radarOptions = ["100m", "250m", "1km", "2km", "3km"];
+
 export default function Seeker() {
   const [view, setView] = useState("menu"); // menu, fragen, notizen, vergleiche, praezision, fotos, masse
 
@@ -86,6 +88,12 @@ export default function Seeker() {
 const [selectedThermometerCard, setSelectedThermometerCard] = useState(null);
 const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
 
+  const [usedRadarOptions, setUsedRadarOptions] = useState(() => {
+  return JSON.parse(localStorage.getItem("usedRadarOptions")) || [];
+});
+const [selectedRadarCard, setSelectedRadarCard] = useState(null);
+const [pendingRadarOption, setPendingRadarOption] = useState(null);
+
   // Reset
   const [resetConfirm, setResetConfirm] = useState(false);
 
@@ -109,6 +117,10 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
   useEffect(() => {
   localStorage.setItem("usedThermometerOptions", JSON.stringify(usedThermometerOptions));
 }, [usedThermometerOptions]);
+
+  useEffect(() => {
+  localStorage.setItem("usedRadarOptions", JSON.stringify(usedRadarOptions));
+}, [usedRadarOptions]);
 
   // Vergleich Anfrage
   const requestUseCompareOption = (option) => {
@@ -205,6 +217,24 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
     setPendingThermometerOption(null);
   };
 
+  // Radar Anfrage
+const requestUseRadarOption = (option) => {
+  setPendingRadarOption(option);
+};
+
+const confirmUseRadarOption = () => {
+  if (!pendingRadarOption) return;
+  setSelectedRadarCard(
+    `Bist du innerhalb von ${pendingRadarOption} von mir?`
+  );
+  setUsedRadarOptions((prev) => [...prev, pendingRadarOption]);
+  setPendingRadarOption(null);
+};
+
+const cancelUseRadarOption = () => {
+  setPendingRadarOption(null);
+};
+
 
   // Reset alle
   const startReset = () => {
@@ -227,8 +257,12 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
     setUsedThermometerOptions([]);
     setSelectedThermometerCard(null);
     setPendingThermometerOption(null);
+    setUsedRadarOptions([]);
+    setSelectedRadarCard(null);
+    setPendingRadarOption(null);
     setDistanceInput("");
     setResetConfirm(false);
+    
 
   };
 
@@ -242,6 +276,7 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
   const isPhotoPromptUsed = (prompt) => usedPhotoPrompts.includes(prompt);
   const isMasseUsed = (option) => usedMasseOptions.includes(option);
   const isThermometerUsed = (option) => usedThermometerOptions.includes(option);
+  const isRadarUsed = (option) => usedRadarOptions.includes(option);
 
 
   return (
@@ -339,9 +374,8 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
           </button>
 
           <button
-            onClick={() => alert("Noch nicht implementiert")}
-            className="btn p-3 mb-2 w-full bg-gray-400 text-white rounded cursor-not-allowed"
-            disabled
+            onClick={() => setView("radar")}
+            className="btn p-3 mb-2 w-full bg-green-600 text-white rounded hover:bg-green-700"
           >
             Radar
           </button>
@@ -711,6 +745,75 @@ const [pendingThermometerOption, setPendingThermometerOption] = useState(null);
     )}
   </>
 )}
+      {/* Radar */}
+{view === "radar" && (
+  <>
+    <button
+      onClick={() => {
+        setView("fragen");
+        setSelectedRadarCard(null);
+        setPendingRadarOption(null);
+      }}
+      className="btn p-2 mb-4 bg-gray-300 rounded hover:bg-gray-400 self-start"
+    >
+      &larr; Zurück zu Fragen
+    </button>
+
+    <h2 className="text-xl font-semibold mb-2">Radar</h2>
+    <p className="mb-1 font-semibold">Preis: Der Verstecker darf 2 Karten ziehen</p>
+    <p className="mb-4 italic">
+      Bist du innerhalb von ___ von mir?
+    </p>
+
+    <div className="grid grid-cols-2 gap-2 mb-4 max-w-xl mx-auto">
+      {radarOptions.map((option) => (
+        <button
+          key={option}
+          onClick={() => requestUseRadarOption(option)}
+          disabled={isRadarUsed(option) || pendingRadarOption !== null}
+          className={`p-2 rounded border ${
+            isRadarUsed(option)
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : pendingRadarOption !== null
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+
+    {/* Bestätigung für Radar */}
+    {pendingRadarOption && (
+      <div className="mb-4 p-3 border rounded bg-yellow-100 max-w-xl mx-auto">
+        <p className="mb-2 font-semibold">Bestätige die Verwendung der Frage:</p>
+        <p className="mb-4 font-bold">
+          Bist du innerhalb von {pendingRadarOption} von mir?
+        </p>
+        <button
+          onClick={confirmUseRadarOption}
+          className="btn p-2 mr-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Bestätigen
+        </button>
+        <button
+          onClick={cancelUseRadarOption}
+          className="btn p-2 bg-gray-400 rounded hover:bg-gray-500"
+        >
+          Abbrechen
+        </button>
+      </div>
+    )}
+
+    {selectedRadarCard && (
+      <div className="border rounded p-4 bg-white shadow text-lg font-bold max-w-xl mx-auto">
+        {selectedRadarCard}
+      </div>
+    )}
+  </>
+)}
+      
 
       {/* Notizen (noch nicht implementiert) */}
       {view === "notizen" && (
